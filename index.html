@@ -2060,6 +2060,9 @@ let previewElement = null;
 function createPreviewMinimap() {
     if (previewElement) return previewElement;
     
+    const surfaceContent = document.getElementById('readingSurfaceContent');
+    if (!surfaceContent) return null;
+    
     previewElement = document.createElement('div');
     previewElement.className = 'arc-preview-minimap';
     previewElement.innerHTML = `
@@ -2068,7 +2071,7 @@ function createPreviewMinimap() {
             <div class="arc-preview-window"></div>
         </div>
     `;
-    readingSurfaceContent.appendChild(previewElement);
+    surfaceContent.appendChild(previewElement);
     
     // Draw 78 tiny card indicators
     const cardsContainer = previewElement.querySelector('.arc-preview-cards');
@@ -2083,8 +2086,10 @@ function createPreviewMinimap() {
 
 function showPreviewMinimap() {
     const preview = createPreviewMinimap();
-    preview.classList.add('visible');
-    updatePreviewWindow();
+    if (preview) {
+        preview.classList.add('visible');
+        updatePreviewWindow();
+    }
 }
 
 function hidePreviewMinimap() {
@@ -2097,6 +2102,8 @@ function updatePreviewWindow() {
     if (!previewElement) return;
     
     const windowEl = previewElement.querySelector('.arc-preview-window');
+    if (!windowEl) return;
+    
     const totalCards = deck.length;
     const visibleCount = Math.min(26, totalCards);
     const scrollOffset = window.mobileArcScrollOffset || 0;
