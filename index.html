@@ -430,6 +430,58 @@
             filter: brightness(0.85);
         }
         
+        /* Preview Minimap */
+        .arc-preview-minimap {
+            position: absolute;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 300px;
+            padding: 0.75rem;
+            background: hsl(var(--card) / 0.95);
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 500;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .arc-preview-minimap.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .arc-preview-track {
+            position: relative;
+            height: 20px;
+            background: hsl(var(--muted) / 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .arc-preview-cards {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+            padding: 0 4px;
+        }
+        .arc-preview-dot {
+            width: 2px;
+            height: 10px;
+            background: hsl(var(--muted-foreground) / 0.4);
+            border-radius: 1px;
+        }
+        .arc-preview-window {
+            position: absolute;
+            top: 2px;
+            bottom: 2px;
+            background: hsl(var(--primary) / 0.3);
+            border: 2px solid hsl(var(--primary));
+            border-radius: 8px;
+            transition: left 0.1s ease-out, width 0.1s ease-out;
+        }
+        
         /* Card ready to place - staged above deck */
         .deck-container .card.card-staged {
             transform: translate(-50%, calc(-50% - 60px)) translateX(0px) scale(1.15) !important;
@@ -1891,6 +1943,7 @@ function shuffleArray(array) {
 function initializeDeck() {
     deck = shuffleArray([...TAROT_DECK]);
     placedCards = [];
+    window.mobileArcScrollOffset = 0; // Reset scroll position
     renderDeck();
     updateDevPanel();
 }
@@ -1910,40 +1963,31 @@ function isMobileView() {
 function applyDeckLayout(cards, cardW, overlap, onCard) {
     const total = cards.length;
     
-    if (isMobileView() && total > 20) {
-        // Two arched rows for mobile - both arch upward
-        const half = Math.ceil(total / 2);
-        const topRow = cards.slice(0, half);
-        const bottomRow = cards.slice(half);
-        const arcHeight = 20;
-        const maxRotation = 15;
+    if (isMobileView()) {
+        // Mobile: Single arc showing 26 cards max (or all if fewer)
+        const visibleCount = Math.min(26, total);
+        const arcHeight = 25;
+        const maxRotation = 18;
+        const mobileOverlap = Math.min(overlap, cardW * 0.7); // Tighter overlap for 26 cards
         
-        // Top row
-        const topTotalW = cardW + (topRow.length - 1) * overlap;
-        const topStartX = -topTotalW / 2 + cardW / 2;
+        const totalW = cardW + (visibleCount - 1) * mobileOverlap;
+        const startX = -totalW / 2 + cardW / 2;
         
-        topRow.forEach((card, i) => {
-            const xPos = topStartX + i * overlap;
-            const progress = topRow.length > 1 ? i / (topRow.length - 1) : 0.5;
+        // Only render first 26 cards initially (or use scroll offset)
+        const scrollOffset = window.mobileArcScrollOffset || 0;
+        const startIndex = Math.max(0, Math.min(total - visibleCount, scrollOffset));
+        
+        for (let i = 0; i < visibleCount && (startIndex + i) < total; i++) {
+            const card = cards[startIndex + i];
+            const globalIndex = startIndex + i;
+            const xPos = startX + i * mobileOverlap;
+            const progress = visibleCount > 1 ? i / (visibleCount - 1) : 0.5;
             const arcY = -Math.sin(progress * Math.PI) * arcHeight;
             const rotation = (progress - 0.5) * maxRotation * 2;
-            onCard(card, i, { xPos, arcY, rotation, top: '30%' });
-        });
-        
-        // Bottom row
-        const bottomTotalW = cardW + (bottomRow.length - 1) * overlap;
-        const bottomStartX = -bottomTotalW / 2 + cardW / 2;
-        
-        bottomRow.forEach((card, i) => {
-            const globalIndex = half + i;
-            const xPos = bottomStartX + i * overlap;
-            const progress = bottomRow.length > 1 ? i / (bottomRow.length - 1) : 0.5;
-            const arcY = -Math.sin(progress * Math.PI) * arcHeight;
-            const rotation = (progress - 0.5) * maxRotation * 2;
-            onCard(card, globalIndex, { xPos, arcY, rotation, top: '72%' });
-        });
+            onCard(card, globalIndex, { xPos, arcY, rotation, top: '50%', visibleIndex: i });
+        }
     } else {
-        // Single row (desktop)
+        // Desktop: Single row (no arc)
         const totalW = cardW + (total - 1) * overlap;
         const startX = -totalW / 2 + cardW / 2;
         
@@ -1989,6 +2033,7 @@ function createCardElement(card, index) {
 // Mobile Arc Selection State
 let arcSelectionState = null;
 let stagedCard = null; // Card waiting to be placed
+window.mobileArcScrollOffset = 0; // Global scroll offset for visible window
 
 function triggerHaptic(style = 'light') {
     // Try iOS Haptic Engine first (for PWA/web apps with haptic support)
@@ -2004,12 +2049,68 @@ function triggerHaptic(style = 'light') {
             case 'medium': navigator.vibrate(15); break;
             case 'heavy': navigator.vibrate(30); break;
             case 'tick': navigator.vibrate(4); break;
+            case 'hardstop': navigator.vibrate([20, 30, 20]); break;
         }
     }
 }
 
+// Preview minimap element
+let previewElement = null;
+
+function createPreviewMinimap() {
+    if (previewElement) return previewElement;
+    
+    previewElement = document.createElement('div');
+    previewElement.className = 'arc-preview-minimap';
+    previewElement.innerHTML = `
+        <div class="arc-preview-track">
+            <div class="arc-preview-cards"></div>
+            <div class="arc-preview-window"></div>
+        </div>
+    `;
+    readingSurfaceContent.appendChild(previewElement);
+    
+    // Draw 78 tiny card indicators
+    const cardsContainer = previewElement.querySelector('.arc-preview-cards');
+    for (let i = 0; i < 78; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'arc-preview-dot';
+        cardsContainer.appendChild(dot);
+    }
+    
+    return previewElement;
+}
+
+function showPreviewMinimap() {
+    const preview = createPreviewMinimap();
+    preview.classList.add('visible');
+    updatePreviewWindow();
+}
+
+function hidePreviewMinimap() {
+    if (previewElement) {
+        previewElement.classList.remove('visible');
+    }
+}
+
+function updatePreviewWindow() {
+    if (!previewElement) return;
+    
+    const windowEl = previewElement.querySelector('.arc-preview-window');
+    const totalCards = deck.length;
+    const visibleCount = Math.min(26, totalCards);
+    const scrollOffset = window.mobileArcScrollOffset || 0;
+    
+    // Calculate window position as percentage
+    const windowWidthPercent = (visibleCount / totalCards) * 100;
+    const windowLeftPercent = (scrollOffset / totalCards) * 100;
+    
+    windowEl.style.width = windowWidthPercent + '%';
+    windowEl.style.left = windowLeftPercent + '%';
+}
+
 function handleDeckTouchStart(e) {
-    // If there's already a staged card, use normal drag for desktop-style interaction
+    // If there's already a staged card, place it on tap or allow drag
     if (stagedCard) {
         startDrag(e);
         return;
@@ -2025,7 +2126,10 @@ function handleDeckTouchStart(e) {
     const touch = e.touches[0];
     const startX = touch.clientX;
     const startY = touch.clientY;
-    const startTime = Date.now();
+    let lastX = startX;
+    let lastY = startY;
+    let lastTime = Date.now();
+    let velocityX = 0;
     
     let longPressTriggered = false;
     let hasMoved = false;
@@ -2034,13 +2138,23 @@ function handleDeckTouchStart(e) {
     const longPressTimer = setTimeout(() => {
         longPressTriggered = true;
         triggerHaptic('medium');
-        initArcSelection(touch.clientX);
+        initMobileArcSelection(startX);
     }, 300); // 300ms for long press
     
     const onTouchMove = (e) => {
         const touch = e.touches[0];
         const dx = touch.clientX - startX;
         const dy = touch.clientY - startY;
+        const now = Date.now();
+        const dt = now - lastTime;
+        
+        // Track velocity
+        if (dt > 0) {
+            velocityX = (touch.clientX - lastX) / dt;
+        }
+        lastX = touch.clientX;
+        lastY = touch.clientY;
+        lastTime = now;
         
         // If moved too much before long press, cancel and start normal drag
         if (!longPressTriggered && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
@@ -2051,10 +2165,12 @@ function handleDeckTouchStart(e) {
             return;
         }
         
-        // If in arc selection mode, handle rotation
+        // If in arc selection mode, handle scrolling
         if (longPressTriggered && arcSelectionState) {
             e.preventDefault();
-            handleArcRotation(touch.clientX);
+            const moveDx = touch.clientX - arcSelectionState.lastX;
+            handleArcScroll(moveDx, velocityX);
+            arcSelectionState.lastX = touch.clientX;
         }
     };
     
@@ -2062,16 +2178,15 @@ function handleDeckTouchStart(e) {
         clearTimeout(longPressTimer);
         
         if (longPressTriggered && arcSelectionState) {
-            // Check for swipe up
             const touch = e.changedTouches[0];
             const dy = touch.clientY - startY;
             
-            if (dy < -30) {
-                // Swipe up - stage the selected card
-                stageSelectedCard();
+            if (dy < -40) {
+                // Swipe up - select the centered card
+                selectCenteredCard();
             } else {
-                // Just released - cancel selection
-                cancelArcSelection();
+                // Released without swipe up - apply momentum then deactivate
+                applyMomentum(velocityX);
             }
         }
         
@@ -2087,74 +2202,129 @@ function handleDeckTouchStart(e) {
     document.addEventListener('touchend', onTouchEnd);
 }
 
-function initArcSelection(clientX) {
-    const cards = Array.from(deckContainer.querySelectorAll('.card'));
-    if (cards.length === 0) return;
+function initMobileArcSelection(initialX) {
+    const totalCards = deck.length;
+    if (totalCards === 0) return;
     
     deckContainer.classList.add('arc-selection-active');
+    showPreviewMinimap();
     
-    // Calculate which card is nearest to touch
-    const centerIndex = findNearestCardIndex(clientX, cards);
+    // Find center card index in visible window
+    const visibleCount = Math.min(26, totalCards);
+    const centerVisibleIndex = Math.floor(visibleCount / 2);
+    const scrollOffset = window.mobileArcScrollOffset || 0;
+    const centeredGlobalIndex = scrollOffset + centerVisibleIndex;
     
     arcSelectionState = {
-        cards,
-        currentIndex: centerIndex,
-        startX: clientX,
-        lastX: clientX
+        totalCards,
+        visibleCount,
+        scrollOffset,
+        centeredIndex: centeredGlobalIndex,
+        lastX: initialX || 0,
+        accumulatedDx: 0
     };
     
-    updateArcCenteredCard(centerIndex);
+    updateMobileArcDisplay();
 }
 
-function findNearestCardIndex(clientX, cards) {
-    let nearestIndex = 0;
-    let nearestDist = Infinity;
-    
-    cards.forEach((card, i) => {
-        const rect = card.getBoundingClientRect();
-        const cardCenterX = rect.left + rect.width / 2;
-        const dist = Math.abs(clientX - cardCenterX);
-        if (dist < nearestDist) {
-            nearestDist = dist;
-            nearestIndex = i;
-        }
-    });
-    
-    return nearestIndex;
-}
-
-function handleArcRotation(clientX) {
+function handleArcScroll(dx, velocity) {
     if (!arcSelectionState) return;
     
-    const { cards, currentIndex, lastX } = arcSelectionState;
-    const dx = clientX - lastX;
+    const { totalCards, visibleCount } = arcSelectionState;
+    const maxOffset = totalCards - visibleCount;
     
-    // Determine card width for sensitivity
-    const cardWidth = cards[0]?.getBoundingClientRect().width || 60;
-    const sensitivity = cardWidth * 0.6; // Move ~60% of card width to switch
+    // Sensitivity: pixels per card scroll
+    const sensitivity = 12; // Lower = more sensitive
     
     arcSelectionState.accumulatedDx = (arcSelectionState.accumulatedDx || 0) + dx;
-    arcSelectionState.lastX = clientX;
     
-    // Check if we've moved enough to switch cards
-    if (Math.abs(arcSelectionState.accumulatedDx) > sensitivity) {
-        const direction = arcSelectionState.accumulatedDx > 0 ? -1 : 1; // Swipe right = previous card
-        const newIndex = Math.max(0, Math.min(cards.length - 1, currentIndex + direction));
+    // Calculate how many cards to scroll
+    const cardsDelta = Math.round(arcSelectionState.accumulatedDx / sensitivity);
+    
+    if (cardsDelta !== 0) {
+        const currentOffset = window.mobileArcScrollOffset || 0;
+        let newOffset = currentOffset - cardsDelta; // Negative because drag right = scroll left
         
-        if (newIndex !== currentIndex) {
-            arcSelectionState.currentIndex = newIndex;
-            arcSelectionState.accumulatedDx = 0;
+        // Hard stops at ends
+        const wasAtStart = currentOffset <= 0;
+        const wasAtEnd = currentOffset >= maxOffset;
+        
+        newOffset = Math.max(0, Math.min(maxOffset, newOffset));
+        
+        const nowAtStart = newOffset <= 0;
+        const nowAtEnd = newOffset >= maxOffset;
+        
+        // Haptic feedback for hitting ends
+        if ((nowAtStart && !wasAtStart) || (nowAtEnd && !wasAtEnd)) {
+            triggerHaptic('hardstop');
+        } else if (newOffset !== currentOffset) {
+            // Tick for each card scrolled
             triggerHaptic('tick');
-            updateArcCenteredCard(newIndex);
         }
+        
+        window.mobileArcScrollOffset = newOffset;
+        arcSelectionState.scrollOffset = newOffset;
+        arcSelectionState.accumulatedDx = 0;
+        
+        // Update centered index
+        const centerVisibleIndex = Math.floor(visibleCount / 2);
+        arcSelectionState.centeredIndex = newOffset + centerVisibleIndex;
+        
+        updateMobileArcDisplay();
+        updatePreviewWindow();
     }
 }
 
-function updateArcCenteredCard(index) {
+function applyMomentum(velocity) {
     if (!arcSelectionState) return;
     
-    arcSelectionState.cards.forEach((card, i) => {
-        if (i === index) {
+    // If velocity is significant, animate momentum
+    if (Math.abs(velocity) > 0.3) {
+        let currentVelocity = velocity * 50; // Scale up
+        const friction = 0.92;
+        
+        const animate = () => {
+            if (!arcSelectionState || Math.abs(currentVelocity) < 1) {
+                endMobileArcSelection();
+                return;
+            }
+            
+            handleArcScroll(currentVelocity, 0);
+            currentVelocity *= friction;
+            
+            requestAnimationFrame(animate);
+        };
+        
+        animate();
+    } else {
+        endMobileArcSelection();
+    }
+}
+
+function endMobileArcSelection() {
+    hidePreviewMinimap();
+    deckContainer.classList.remove('arc-selection-active');
+    
+    // Remove centered highlight
+    const cards = deckContainer.querySelectorAll('.card');
+    cards.forEach(card => card.classList.remove('arc-centered'));
+    
+    arcSelectionState = null;
+}
+
+function updateMobileArcDisplay() {
+    if (!arcSelectionState) return;
+    
+    // Re-render deck with new scroll offset
+    renderMobileArc();
+    
+    // Highlight centered card
+    const { visibleCount } = arcSelectionState;
+    const centerVisibleIndex = Math.floor(visibleCount / 2);
+    const cards = deckContainer.querySelectorAll('.card');
+    
+    cards.forEach((card, i) => {
+        if (i === centerVisibleIndex) {
             card.classList.add('arc-centered');
         } else {
             card.classList.remove('arc-centered');
@@ -2162,42 +2332,69 @@ function updateArcCenteredCard(index) {
     });
 }
 
-function stageSelectedCard() {
+function renderMobileArc() {
+    deckContainer.innerHTML = '';
+    const { cardW, overlap } = getCardDimensions();
+    
+    const totalCards = deck.length;
+    const visibleCount = Math.min(26, totalCards);
+    const scrollOffset = window.mobileArcScrollOffset || 0;
+    const startIndex = Math.max(0, Math.min(totalCards - visibleCount, scrollOffset));
+    
+    const arcHeight = 25;
+    const maxRotation = 18;
+    const mobileOverlap = Math.min(overlap * 1.2, cardW * 0.65);
+    
+    const totalW = cardW + (visibleCount - 1) * mobileOverlap;
+    const startX = -totalW / 2 + cardW / 2;
+    
+    for (let i = 0; i < visibleCount && (startIndex + i) < totalCards; i++) {
+        const globalIndex = startIndex + i;
+        const card = deck[globalIndex];
+        const xPos = startX + i * mobileOverlap;
+        const progress = visibleCount > 1 ? i / (visibleCount - 1) : 0.5;
+        const arcY = -Math.sin(progress * Math.PI) * arcHeight;
+        const rotation = (progress - 0.5) * maxRotation * 2;
+        
+        const el = createCardElement(card, globalIndex);
+        el.style.left = '50%';
+        el.style.top = '50%';
+        el.style.setProperty('--base-x', xPos + 'px');
+        el.style.setProperty('--base-y', arcY + 'px');
+        el.style.setProperty('--base-rot', rotation + 'deg');
+        el.style.transform = `translate(-50%, -50%) translateX(${xPos}px) translateY(${arcY}px) rotate(${rotation}deg)`;
+        el.style.zIndex = i;
+        
+        deckContainer.appendChild(el);
+    }
+}
+
+function selectCenteredCard() {
     if (!arcSelectionState) return;
     
-    const { cards, currentIndex } = arcSelectionState;
-    const selectedCard = cards[currentIndex];
+    const { centeredIndex, visibleCount } = arcSelectionState;
+    const centerVisibleIndex = Math.floor(visibleCount / 2);
+    const cards = deckContainer.querySelectorAll('.card');
+    const selectedCard = cards[centerVisibleIndex];
     
     if (selectedCard) {
         triggerHaptic('medium');
         
-        // Remove centered class, add staged class
+        // Stage the card
         selectedCard.classList.remove('arc-centered');
         selectedCard.classList.add('card-staged');
-        
-        // Store reference to staged card
         stagedCard = selectedCard;
+        stagedCard.dataset.deckIndex = centeredIndex;
         
         // Dim other cards
         cards.forEach((card, i) => {
-            if (i !== currentIndex) {
+            if (i !== centerVisibleIndex) {
                 card.style.opacity = '0.4';
             }
         });
     }
     
-    // Clean up arc selection state
-    deckContainer.classList.remove('arc-selection-active');
-    arcSelectionState = null;
-}
-
-function cancelArcSelection() {
-    if (!arcSelectionState) return;
-    
-    arcSelectionState.cards.forEach(card => {
-        card.classList.remove('arc-centered');
-    });
-    
+    hidePreviewMinimap();
     deckContainer.classList.remove('arc-selection-active');
     arcSelectionState = null;
 }
@@ -2207,6 +2404,10 @@ function cancelStagedCard() {
     
     stagedCard.classList.remove('card-staged');
     stagedCard = null;
+    
+    // Restore opacity of all deck cards and re-render
+    window.mobileArcScrollOffset = 0;
+    renderDeck();
     
     // Restore opacity of all deck cards
     const cards = deckContainer.querySelectorAll('.card');
