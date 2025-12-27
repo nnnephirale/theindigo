@@ -592,7 +592,8 @@
                        scale(var(--scale));
         }
         .card-picker-card:hover,
-        .card-picker-card:active {
+        .card-picker-card:active,
+        .card-picker-card.touch-active {
             z-index: 100 !important;
             --lift: -15px;
             --scale: 1.15;
@@ -2205,6 +2206,9 @@ function createCardPickerModal() {
     // Setup notch drag to dismiss
     setupNotchDragToDismiss(cardPickerModal);
     
+    // Setup touch tracking for card selection (enables left-to-right swiping)
+    setupPickerTouchTracking(cardPickerModal);
+    
     return cardPickerModal;
 }
 
@@ -2250,6 +2254,73 @@ function setupNotchDragToDismiss(modal) {
             content.style.transform = '';
         }
     });
+}
+
+function setupPickerTouchTracking(modal) {
+    const cardsContainer = modal.querySelector('.card-picker-cards');
+    let currentTouchCard = null;
+    let touchMoved = false;
+    
+    cardsContainer.addEventListener('touchstart', (e) => {
+        touchMoved = false;
+        const touch = e.touches[0];
+        const card = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.card-picker-card');
+        if (card) {
+            currentTouchCard = card;
+            card.classList.add('touch-active');
+        }
+    }, { passive: true });
+    
+    cardsContainer.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        // Temporarily hide current card to find what's underneath
+        if (currentTouchCard) {
+            currentTouchCard.style.pointerEvents = 'none';
+        }
+        const card = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.card-picker-card');
+        if (currentTouchCard) {
+            currentTouchCard.style.pointerEvents = '';
+        }
+        
+        if (card !== currentTouchCard) {
+            touchMoved = true;
+            // Remove active state from old card
+            if (currentTouchCard) {
+                currentTouchCard.classList.remove('touch-active');
+            }
+            // Add active state to new card
+            if (card) {
+                card.classList.add('touch-active');
+                triggerHaptic('light');
+            }
+            currentTouchCard = card;
+        }
+    }, { passive: true });
+    
+    cardsContainer.addEventListener('touchend', (e) => {
+        if (currentTouchCard) {
+            currentTouchCard.classList.remove('touch-active');
+            // Only handle selection here if user swiped between cards
+            // Simple taps will be handled by the click event
+            if (touchMoved) {
+                e.preventDefault();
+                const cardId = currentTouchCard.dataset.cardId;
+                const index = parseInt(currentTouchCard.dataset.index);
+                const card = deck.find(c => c.id === cardId);
+                if (card) {
+                    selectCardFromPicker(card, index);
+                }
+            }
+            currentTouchCard = null;
+        }
+    });
+    
+    cardsContainer.addEventListener('touchcancel', () => {
+        if (currentTouchCard) {
+            currentTouchCard.classList.remove('touch-active');
+            currentTouchCard = null;
+        }
+    }, { passive: true });
 }
 
 function openCardPickerModal() {
