@@ -586,6 +586,7 @@
         .card-picker-card:hover,
         .card-picker-card:active {
             z-index: 100 !important;
+            transform: translate(-50%, -50%) translateY(-15px) scale(1.15) !important;
         }
         .card-picker-card-back {
             width: 100%;
@@ -2260,37 +2261,36 @@ function renderPickerCards() {
     // Get card dimensions (same as dock)
     const { cardW, overlap } = getCardDimensions();
     
-    // Always render 3 rows with 26 cards each
+    // Split deck into 3 rows (26 cards max per row)
     const cardsPerRow = 26;
     const rows = [
         deck.slice(0, cardsPerRow),
         deck.slice(cardsPerRow, cardsPerRow * 2),
         deck.slice(cardsPerRow * 2)
-    ];
+    ].filter(row => row.length > 0); // Remove empty rows
     
     // Arc settings matching the dock exactly
     const arcHeight = 20;
     const maxRotation = 15;
     const mobileOverlap = Math.min(overlap * 1.1, cardW * 0.6);
     
-    // Calculate total width and starting position (same as dock)
-    const totalW = cardW + (cardsPerRow - 1) * mobileOverlap;
-    const startX = -totalW / 2 + cardW / 2;
-    
     rows.forEach((rowCards, rowIndex) => {
         const rowEl = document.createElement('div');
         rowEl.className = 'card-picker-row';
         // Set row height to accommodate arc + card height
         rowEl.style.height = (cardW * 1.6 + arcHeight + 10) + 'px';
-        const startIndex = rowIndex * cardsPerRow;
+        
+        // Calculate positioning based on THIS row's card count
+        const rowCount = rowCards.length;
+        const totalW = cardW + (rowCount - 1) * mobileOverlap;
+        const startX = -totalW / 2 + cardW / 2;
         
         rowCards.forEach((card, i) => {
-            const globalIndex = startIndex + i;
-            const cardEl = createPickerCard(card, globalIndex, cardW);
+            const cardEl = createPickerCard(card, i, cardW);
             
-            // Calculate position exactly like dock
+            // Calculate position for this row's cards
             const xPos = startX + i * mobileOverlap;
-            const progress = rowCards.length > 1 ? i / (rowCards.length - 1) : 0.5;
+            const progress = rowCount > 1 ? i / (rowCount - 1) : 0.5;
             const arcY = -Math.sin(progress * Math.PI) * arcHeight;
             const rotation = (progress - 0.5) * maxRotation * 2;
             
