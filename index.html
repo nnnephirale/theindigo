@@ -489,34 +489,27 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 35vh;
+            height: 55vh;
             background: hsl(var(--card));
             border-radius: 1rem 1rem 0 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             animation: slideUp 0.25s ease-out;
-            transition: height 0.3s ease-out;
         }
-        .card-picker-content[data-height-state="1"] { height: 35vh; }
-        .card-picker-content[data-height-state="2"] { height: 55vh; }
-        .card-picker-content[data-height-state="3"] { height: 88vh; }
         
         @keyframes slideUp {
             from { transform: translateY(100%); }
             to { transform: translateY(0); }
         }
         
-        /* Notch drag handle */
+        /* Notch (decorative only now) */
         .card-picker-notch-area {
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 12px 0 8px 0;
-            cursor: grab;
-            touch-action: none;
         }
-        .card-picker-notch-area:active { cursor: grabbing; }
         .card-picker-notch {
             width: 36px;
             height: 5px;
@@ -542,7 +535,24 @@
             align-items: flex-end;
             min-height: 70px;
             padding: 0.5rem 0;
+            opacity: 0;
+            animation: rowFadeIn 0.4s ease-out forwards;
         }
+        .card-picker-row:nth-child(1) { animation-delay: 0.05s; }
+        .card-picker-row:nth-child(2) { animation-delay: 0.15s; }
+        .card-picker-row:nth-child(3) { animation-delay: 0.25s; }
+        
+        @keyframes rowFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
         .card-picker-card {
             width: 36px;
             height: 54px;
@@ -2144,7 +2154,7 @@ function createCardPickerModal() {
     cardPickerModal.className = 'card-picker-modal';
     cardPickerModal.innerHTML = `
         <div class="card-picker-overlay"></div>
-        <div class="card-picker-content" data-height-state="1">
+        <div class="card-picker-content">
             <div class="card-picker-notch-area">
                 <div class="card-picker-notch"></div>
             </div>
@@ -2156,194 +2166,52 @@ function createCardPickerModal() {
     // Close on overlay click
     cardPickerModal.querySelector('.card-picker-overlay').addEventListener('click', closeCardPickerModal);
     
-    // Setup notch drag
-    setupNotchDrag(cardPickerModal);
-    
     return cardPickerModal;
 }
 
 function openCardPickerModal() {
     const modal = createCardPickerModal();
-    const content = modal.querySelector('.card-picker-content');
-    
-    // Start at height state 1 (2 rows)
-    content.dataset.heightState = '1';
-    renderPickerCards(1);
+    renderPickerCards();
     
     modal.classList.add('open');
     triggerHaptic('light');
 }
 
-function renderPickerCards(heightState) {
+function renderPickerCards() {
     const modal = cardPickerModal;
     if (!modal) return;
     
     const cardsContainer = modal.querySelector('.card-picker-cards');
     cardsContainer.innerHTML = '';
     
-    if (heightState === 1) {
-        // 2 arched rows
-        renderTwoRows(cardsContainer);
-    } else if (heightState === 2) {
-        // 3 arched rows
-        renderThreeRows(cardsContainer);
-    } else if (heightState === 3) {
-        // Horseshoe layout
-        renderHorseshoe(cardsContainer);
-    }
-}
-
-function renderTwoRows(container) {
-    const half = Math.ceil(deck.length / 2);
-    const topRow = deck.slice(0, half);
-    const bottomRow = deck.slice(half);
-    
-    const topRowEl = document.createElement('div');
-    topRowEl.className = 'card-picker-row';
-    topRow.forEach((card, i) => {
-        const cardEl = createPickerCard(card, i);
-        const progress = topRow.length > 1 ? i / (topRow.length - 1) : 0.5;
-        const rotation = (progress - 0.5) * 20;
-        const arcY = -Math.sin(progress * Math.PI) * 8;
-        cardEl.style.transform = `rotate(${rotation}deg) translateY(${arcY}px)`;
-        topRowEl.appendChild(cardEl);
-    });
-    
-    const bottomRowEl = document.createElement('div');
-    bottomRowEl.className = 'card-picker-row';
-    bottomRow.forEach((card, i) => {
-        const globalIndex = half + i;
-        const cardEl = createPickerCard(card, globalIndex);
-        const progress = bottomRow.length > 1 ? i / (bottomRow.length - 1) : 0.5;
-        const rotation = (progress - 0.5) * 20;
-        const arcY = -Math.sin(progress * Math.PI) * 8;
-        cardEl.style.transform = `rotate(${rotation}deg) translateY(${arcY}px)`;
-        bottomRowEl.appendChild(cardEl);
-    });
-    
-    container.appendChild(topRowEl);
-    container.appendChild(bottomRowEl);
-}
-
-function renderThreeRows(container) {
-    const third = Math.ceil(deck.length / 3);
+    // Always render 3 rows with 26 cards each
+    const cardsPerRow = 26;
     const rows = [
-        deck.slice(0, third),
-        deck.slice(third, third * 2),
-        deck.slice(third * 2)
+        deck.slice(0, cardsPerRow),
+        deck.slice(cardsPerRow, cardsPerRow * 2),
+        deck.slice(cardsPerRow * 2)
     ];
+    
+    // Arc settings matching the dock
+    const arcHeight = 20;
+    const maxRotation = 15;
     
     rows.forEach((rowCards, rowIndex) => {
         const rowEl = document.createElement('div');
         rowEl.className = 'card-picker-row';
-        const startIndex = rowIndex * third;
+        const startIndex = rowIndex * cardsPerRow;
         
         rowCards.forEach((card, i) => {
             const globalIndex = startIndex + i;
             const cardEl = createPickerCard(card, globalIndex);
             const progress = rowCards.length > 1 ? i / (rowCards.length - 1) : 0.5;
-            const rotation = (progress - 0.5) * 18;
-            const arcY = -Math.sin(progress * Math.PI) * 6;
+            const rotation = (progress - 0.5) * maxRotation * 2;
+            const arcY = -Math.sin(progress * Math.PI) * arcHeight;
             cardEl.style.transform = `rotate(${rotation}deg) translateY(${arcY}px)`;
             rowEl.appendChild(cardEl);
         });
         
-        container.appendChild(rowEl);
-    });
-}
-
-function renderHorseshoe(container) {
-    const horseshoeEl = document.createElement('div');
-    horseshoeEl.className = 'card-picker-horseshoe';
-    
-    // Arrange cards in a U-shape (horseshoe)
-    const totalCards = deck.length;
-    const arcSpan = Math.PI * 1.3; // About 234 degrees (horseshoe shape)
-    const startAngle = Math.PI * 0.85; // Start from upper left
-    
-    deck.forEach((card, i) => {
-        const cardEl = createPickerCard(card, i);
-        const progress = i / (totalCards - 1);
-        const angle = startAngle - progress * arcSpan;
-        
-        // Position on arc
-        const radiusX = 42; // % of container width
-        const radiusY = 38; // % of container height
-        const centerX = 50;
-        const centerY = 48;
-        
-        const x = centerX + Math.cos(angle) * radiusX;
-        const y = centerY - Math.sin(angle) * radiusY;
-        
-        // Rotation tangent to the arc
-        const rotation = -(angle * 180 / Math.PI) + 90;
-        
-        cardEl.style.position = 'absolute';
-        cardEl.style.left = `${x}%`;
-        cardEl.style.top = `${y}%`;
-        cardEl.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
-        
-        horseshoeEl.appendChild(cardEl);
-    });
-    
-    container.appendChild(horseshoeEl);
-}
-
-// Notch drag handling
-function setupNotchDrag(modal) {
-    const notchArea = modal.querySelector('.card-picker-notch-area');
-    const content = modal.querySelector('.card-picker-content');
-    
-    let startY = 0;
-    let startHeight = 0;
-    let currentState = 1;
-    
-    const heights = {
-        1: 35,  // 35vh - 2 rows
-        2: 55,  // 55vh - 3 rows  
-        3: 88   // 88vh - horseshoe
-    };
-    
-    notchArea.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        startY = e.touches[0].clientY;
-        currentState = parseInt(content.dataset.heightState) || 1;
-        startHeight = heights[currentState];
-        content.style.transition = 'none';
-    });
-    
-    notchArea.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        const deltaY = startY - e.touches[0].clientY;
-        const deltaVh = (deltaY / window.innerHeight) * 100;
-        const newHeight = Math.max(25, Math.min(92, startHeight + deltaVh));
-        content.style.height = `${newHeight}vh`;
-    });
-    
-    notchArea.addEventListener('touchend', (e) => {
-        content.style.transition = '';
-        const currentHeight = parseFloat(content.style.height) || heights[currentState];
-        
-        // Snap to nearest state
-        let newState = 1;
-        if (currentHeight > 70) {
-            newState = 3;
-        } else if (currentHeight > 42) {
-            newState = 2;
-        } else if (currentHeight < 28) {
-            // Dragged down below minimum - close modal
-            closeCardPickerModal();
-            return;
-        }
-        
-        content.dataset.heightState = newState;
-        content.style.height = `${heights[newState]}vh`;
-        
-        // Re-render cards if state changed
-        if (newState !== currentState) {
-            triggerHaptic('light');
-            renderPickerCards(newState);
-        }
+        cardsContainer.appendChild(rowEl);
     });
 }
 
