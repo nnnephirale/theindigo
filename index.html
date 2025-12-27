@@ -582,11 +582,20 @@
             top: 50%;
             cursor: pointer;
             transition: transform 0.15s ease, z-index 0s;
+            /* Base transform uses custom properties set by JS */
+            --lift: 0px;
+            --scale: 1;
+            transform: translate(-50%, -50%) 
+                       translateX(var(--x, 0px)) 
+                       translateY(calc(var(--y, 0px) + var(--lift))) 
+                       rotate(var(--rot, 0deg))
+                       scale(var(--scale));
         }
         .card-picker-card:hover,
         .card-picker-card:active {
             z-index: 100 !important;
-            transform: translate(-50%, -50%) translateY(-15px) scale(1.15) !important;
+            --lift: -15px;
+            --scale: 1.15;
         }
         .card-picker-card-back {
             width: 100%;
@@ -2294,8 +2303,10 @@ function renderPickerCards() {
             const arcY = -Math.sin(progress * Math.PI) * arcHeight;
             const rotation = (progress - 0.5) * maxRotation * 2;
             
-            // Apply transform like dock does
-            cardEl.style.transform = `translate(-50%, -50%) translateX(${xPos}px) translateY(${arcY}px) rotate(${rotation}deg)`;
+            // Set CSS custom properties (transform is composed in CSS)
+            cardEl.style.setProperty('--x', `${xPos}px`);
+            cardEl.style.setProperty('--y', `${arcY}px`);
+            cardEl.style.setProperty('--rot', `${rotation}deg`);
             // Rightmost card on top (higher index = higher z-index)
             cardEl.style.zIndex = i;
             
