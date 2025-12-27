@@ -404,6 +404,29 @@
             .header-left h1 { display: none; }
             .header-left .toggle-group { display: none; }
             
+            /* Mobile header buttons - larger, icon only */
+            header {
+                padding: 0.75rem 1rem;
+            }
+            .controls {
+                gap: 0.5rem;
+            }
+            .controls .btn {
+                padding: 0.6rem;
+                min-width: 44px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .controls .btn .icon {
+                width: 22px;
+                height: 22px;
+            }
+            .controls .btn span {
+                display: none;
+            }
+            
             /* Hide desktop deck controls on mobile */
             .deck-controls { display: none; }
             
@@ -454,20 +477,6 @@
             transform: translate(-50%, calc(-50% - 15px)) translateX(var(--base-x, 0px)) translateY(var(--base-y, 0px)) rotate(var(--base-rot, 0deg)) scale(1.05) !important;
         }
         
-        /* Mobile Arc Selection Mode */
-        .deck-container.arc-selection-active .card {
-            transition: transform 0.15s ease-out, opacity 0.15s ease-out, box-shadow 0.15s ease-out;
-        }
-        .deck-container.arc-selection-active .card.arc-centered {
-            transform: translate(-50%, calc(-50% - 25px)) translateX(var(--base-x, 0px)) translateY(var(--base-y, 0px)) rotate(var(--base-rot, 0deg)) scale(1.1) !important;
-            z-index: 100 !important;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), 0 0 12px rgba(255, 255, 255, 0.08);
-        }
-        .deck-container.arc-selection-active .card:not(.arc-centered) {
-            opacity: 0.6;
-            filter: brightness(0.85);
-        }
-        
         /* Mobile Card Picker Modal */
         .card-picker-modal {
             position: fixed;
@@ -496,19 +505,35 @@
             flex-direction: column;
             overflow: hidden;
             animation: slideUp 0.25s ease-out;
+            transition: transform 0.2s ease-out;
+        }
+        .card-picker-content.dragging {
+            transition: none;
+        }
+        .card-picker-content.dismissing {
+            animation: slideDown 0.2s ease-out forwards;
         }
         
         @keyframes slideUp {
             from { transform: translateY(100%); }
             to { transform: translateY(0); }
         }
+        @keyframes slideDown {
+            from { transform: translateY(0); }
+            to { transform: translateY(100%); }
+        }
         
-        /* Notch (decorative only now) */
+        /* Notch drag handle */
         .card-picker-notch-area {
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 12px 0 8px 0;
+            cursor: grab;
+            touch-action: none;
+        }
+        .card-picker-notch-area:active {
+            cursor: grabbing;
         }
         .card-picker-notch {
             width: 36px;
@@ -521,10 +546,10 @@
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 1rem 1.5rem 1.5rem;
+            padding: 0.5rem 0.5rem 1rem;
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
+            gap: 0.5rem;
             touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
@@ -533,7 +558,7 @@
             display: flex;
             justify-content: center;
             align-items: flex-end;
-            min-height: 85px;
+            min-height: 75px;
             padding: 0.25rem 0;
             opacity: 0;
             animation: rowFadeIn 0.4s ease-out forwards;
@@ -554,16 +579,17 @@
         }
         
         .card-picker-card {
-            width: 28px;
-            height: 42px;
-            margin: 0 -6px;
+            width: var(--deck-card-width);
+            height: var(--deck-card-height);
+            margin: 0 calc(var(--card-overlap) * -0.9);
             cursor: pointer;
             transition: transform 0.15s ease, z-index 0s;
             position: relative;
+            flex-shrink: 0;
         }
         .card-picker-card:hover,
         .card-picker-card:active {
-            transform: scale(1.3) translateY(-10px) !important;
+            transform: scale(1.2) translateY(-10px) !important;
             z-index: 10;
         }
         .card-picker-card-back {
@@ -2171,7 +2197,54 @@ function createCardPickerModal() {
     // Close on overlay click
     cardPickerModal.querySelector('.card-picker-overlay').addEventListener('click', closeCardPickerModal);
     
+    // Setup notch drag to dismiss
+    setupNotchDragToDismiss(cardPickerModal);
+    
     return cardPickerModal;
+}
+
+function setupNotchDragToDismiss(modal) {
+    const notchArea = modal.querySelector('.card-picker-notch-area');
+    const content = modal.querySelector('.card-picker-content');
+    
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+    
+    notchArea.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        startY = e.touches[0].clientY;
+        currentY = 0;
+        content.classList.add('dragging');
+    }, { passive: true });
+    
+    notchArea.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        
+        const deltaY = e.touches[0].clientY - startY;
+        // Only allow dragging down (positive deltaY)
+        currentY = Math.max(0, deltaY);
+        content.style.transform = `translateY(${currentY}px)`;
+    }, { passive: true });
+    
+    notchArea.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        content.classList.remove('dragging');
+        
+        // If dragged more than 100px down, dismiss
+        if (currentY > 100) {
+            content.classList.add('dismissing');
+            setTimeout(() => {
+                closeCardPickerModal();
+                content.classList.remove('dismissing');
+                content.style.transform = '';
+            }, 200);
+        } else {
+            // Snap back
+            content.style.transform = '';
+        }
+    });
 }
 
 function openCardPickerModal() {
@@ -3410,9 +3483,57 @@ readingSurface.addEventListener('click', e => {
 });
 
 // Exit text mode with Escape key
+// Global escape key handler for all modals and overlays
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && textModeActive) {
-        exitTextMode();
+    if (e.key === 'Escape') {
+        // Priority order: close innermost/most recent first
+        
+        // 1. Card meaning modal (hide via class, don't remove - it's a persistent element)
+        const cardModal = document.getElementById('cardModal');
+        if (cardModal && cardModal.classList.contains('active')) {
+            cardModal.classList.remove('active');
+            return;
+        }
+        
+        // 2. Card picker modal (mobile)
+        if (cardPickerModal && cardPickerModal.classList.contains('open')) {
+            closeCardPickerModal();
+            return;
+        }
+        
+        // 3. Save modal
+        const saveModal = document.getElementById('saveModal');
+        if (saveModal && saveModal.classList.contains('active')) {
+            closeSaveModal();
+            return;
+        }
+        
+        // 4. Reading history panel (has both panel and overlay)
+        const historyPanel = document.getElementById('historyPanel');
+        if (historyPanel && historyPanel.classList.contains('active')) {
+            closeHistoryPanel();
+            return;
+        }
+        
+        // 5. Spread panel (has both panel and overlay)
+        const spreadPanel = document.getElementById('spreadPanel');
+        if (spreadPanel && spreadPanel.classList.contains('active')) {
+            closeSpreadPanel();
+            return;
+        }
+        
+        // 6. Mobile menu
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenu && mobileMenu.classList.contains('show')) {
+            mobileMenu.classList.remove('show');
+            return;
+        }
+        
+        // 7. Text mode (last priority)
+        if (textModeActive) {
+            exitTextMode();
+            return;
+        }
     }
 });
 
