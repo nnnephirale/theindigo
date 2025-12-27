@@ -2407,9 +2407,14 @@ function closeCardPickerModal() {
 }
 
 function handleDeckTouchStart(e) {
-    // If there's already a staged card, allow drag to place it
-    if (stagedCard) {
-        startDrag(e);
+    // If there's already a staged card on mobile, ignore taps on deck cards
+    if (stagedCard && isMobileView()) {
+        // Only allow tapping the staged card itself to drag it
+        if (e.target.closest('.card-staged')) {
+            startDrag(e);
+        }
+        // Otherwise do nothing - ignore taps on deck cards
+        e.preventDefault();
         return;
     }
     
@@ -2427,7 +2432,8 @@ function handleDeckTouchStart(e) {
 function cancelStagedCard() {
     if (!stagedCard) return;
     
-    stagedCard.classList.remove('card-staged');
+    // Remove the staged card element from DOM (it was dynamically created)
+    stagedCard.remove();
     stagedCard = null;
     
     // Restore opacity of all deck cards
@@ -2435,6 +2441,9 @@ function cancelStagedCard() {
     cards.forEach(card => {
         card.style.opacity = '';
     });
+    
+    // Re-render deck to ensure clean state
+    renderDeck();
 }
 
 // Tap on deck area (not on a card) to cancel staged card
