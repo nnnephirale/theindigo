@@ -50,7 +50,6 @@
         }
         .app-container { display: flex; flex-direction: column; height: 100vh; }
         header {
-            position: relative;
             padding: 1rem 1.5rem;
             display: flex;
             justify-content: space-between;
@@ -60,53 +59,6 @@
         h1 { font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; }
         .header-left { display: flex; align-items: center; gap: 1rem; }
         .controls { display: flex; gap: 0.5rem; align-items: center; }
-        
-        /* Mobile Menu - hidden by default */
-        .menu-btn {
-            display: none;
-            background: transparent;
-            border: none;
-            padding: 0.5rem;
-            cursor: pointer;
-            color: hsl(var(--foreground));
-        }
-        .menu-btn .icon { width: 1.25rem; height: 1.25rem; }
-        
-        .mobile-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: hsl(var(--card));
-            border-bottom: 1px solid hsl(var(--border));
-            padding: 0.5rem;
-            z-index: 1000;
-            flex-direction: column;
-            gap: 0.25rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        .mobile-menu.open { display: flex; }
-        
-        .mobile-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            background: transparent;
-            border: none;
-            border-radius: var(--radius);
-            font-size: 0.875rem;
-            font-family: inherit;
-            color: hsl(var(--foreground));
-            cursor: pointer;
-            transition: background 0.15s ease;
-        }
-        .mobile-menu-item:hover { background: hsl(var(--accent)); }
-        .mobile-menu-item:active { background: hsl(var(--accent)); }
-        .mobile-menu-item .icon { width: 1.125rem; height: 1.125rem; flex-shrink: 0; }
-        .mobile-menu-item.active { background: hsl(var(--primary) / 0.1); color: hsl(var(--primary)); }
-        
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
             font-size: 0.8125rem; font-weight: 500; font-family: inherit;
@@ -389,14 +341,6 @@
             clip-path: inset(0 0 0 0);
         }
         @media (max-width: 600px) {
-            /* Mobile header: show menu button, hide title and dev toggle */
-            .menu-btn { display: flex; }
-            .header-left h1 { display: none; }
-            .header-left .toggle-group { display: none; }
-            
-            /* Hide desktop deck controls on mobile */
-            .deck-controls { display: none; }
-            
             .deck-container { height: clamp(140px, 22vh, 200px); }
             .deck-area.docked .deck-container { 
                 transform: translateY(calc(100% - 78px)); 
@@ -428,58 +372,6 @@
         .deck-container.arc-selection-active .card:not(.arc-centered) {
             opacity: 0.6;
             filter: brightness(0.85);
-        }
-        
-        /* Preview Minimap */
-        .arc-preview-minimap {
-            position: absolute;
-            top: 1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            max-width: 300px;
-            padding: 0.75rem;
-            background: hsl(var(--card) / 0.95);
-            border: 1px solid hsl(var(--border));
-            border-radius: var(--radius);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 500;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s ease, visibility 0.2s ease;
-        }
-        .arc-preview-minimap.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-        .arc-preview-track {
-            position: relative;
-            height: 20px;
-            background: hsl(var(--muted) / 0.3);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        .arc-preview-cards {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 100%;
-            padding: 0 4px;
-        }
-        .arc-preview-dot {
-            width: 2px;
-            height: 10px;
-            background: hsl(var(--muted-foreground) / 0.4);
-            border-radius: 1px;
-        }
-        .arc-preview-window {
-            position: absolute;
-            top: 2px;
-            bottom: 2px;
-            background: hsl(var(--primary) / 0.3);
-            border: 2px solid hsl(var(--primary));
-            border-radius: 8px;
-            transition: left 0.1s ease-out, width 0.1s ease-out;
         }
         
         /* Card ready to place - staged above deck */
@@ -853,11 +745,6 @@
     <div class="app-container">
         <header>
             <div class="header-left">
-                <button class="menu-btn" id="menuBtn" title="Menu">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
                 <h1>Tarot Reader</h1>
                 <div class="toggle-group">
                     <span class="toggle-label">Dev</span>
@@ -881,38 +768,6 @@
                     <svg class="icon" id="themeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
-                </button>
-            </div>
-            
-            <!-- Mobile Menu Dropdown -->
-            <div class="mobile-menu" id="mobileMenu">
-                <button class="mobile-menu-item" id="mobileShuffleBtn">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 17h2.735a4 4 0 003.43-1.94l3.67-6.12A4 4 0 0116.265 7H21m0 0l-3-3m3 3l-3 3M3 7h2.735a4 4 0 013.43 1.94l.5.83m6.07 4.29l.5.83A4 4 0 0016.265 17H21m0 0l-3-3m3 3l-3 3" />
-                    </svg>
-                    <span>Shuffle</span>
-                </button>
-                <button class="mobile-menu-item" id="mobileResetBtn">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-                    </svg>
-                    <span>Reset</span>
-                </button>
-                <button class="mobile-menu-item" id="mobileReversalsBtn">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                    </svg>
-                    <span>Reversals</span>
-                </button>
-                <button class="mobile-menu-item" id="mobileSpreadBtn">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <rect x="2" y="3" width="5" height="8" rx="1" />
-                        <rect x="9.5" y="3" width="5" height="8" rx="1" />
-                        <rect x="17" y="3" width="5" height="8" rx="1" />
-                        <rect x="5.75" y="13" width="5" height="8" rx="1" />
-                        <rect x="13.25" y="13" width="5" height="8" rx="1" />
-                    </svg>
-                    <span>Pick a Spread</span>
                 </button>
             </div>
         </header>
@@ -1943,7 +1798,6 @@ function shuffleArray(array) {
 function initializeDeck() {
     deck = shuffleArray([...TAROT_DECK]);
     placedCards = [];
-    window.mobileArcScrollOffset = 0; // Reset scroll position
     renderDeck();
     updateDevPanel();
 }
@@ -1963,31 +1817,40 @@ function isMobileView() {
 function applyDeckLayout(cards, cardW, overlap, onCard) {
     const total = cards.length;
     
-    if (isMobileView()) {
-        // Mobile: Single arc showing 26 cards max (or all if fewer)
-        const visibleCount = Math.min(26, total);
-        const arcHeight = 25;
-        const maxRotation = 18;
-        const mobileOverlap = Math.min(overlap, cardW * 0.7); // Tighter overlap for 26 cards
+    if (isMobileView() && total > 20) {
+        // Two arched rows for mobile - both arch upward
+        const half = Math.ceil(total / 2);
+        const topRow = cards.slice(0, half);
+        const bottomRow = cards.slice(half);
+        const arcHeight = 20;
+        const maxRotation = 15;
         
-        const totalW = cardW + (visibleCount - 1) * mobileOverlap;
-        const startX = -totalW / 2 + cardW / 2;
+        // Top row
+        const topTotalW = cardW + (topRow.length - 1) * overlap;
+        const topStartX = -topTotalW / 2 + cardW / 2;
         
-        // Only render first 26 cards initially (or use scroll offset)
-        const scrollOffset = window.mobileArcScrollOffset || 0;
-        const startIndex = Math.max(0, Math.min(total - visibleCount, scrollOffset));
-        
-        for (let i = 0; i < visibleCount && (startIndex + i) < total; i++) {
-            const card = cards[startIndex + i];
-            const globalIndex = startIndex + i;
-            const xPos = startX + i * mobileOverlap;
-            const progress = visibleCount > 1 ? i / (visibleCount - 1) : 0.5;
+        topRow.forEach((card, i) => {
+            const xPos = topStartX + i * overlap;
+            const progress = topRow.length > 1 ? i / (topRow.length - 1) : 0.5;
             const arcY = -Math.sin(progress * Math.PI) * arcHeight;
             const rotation = (progress - 0.5) * maxRotation * 2;
-            onCard(card, globalIndex, { xPos, arcY, rotation, top: '50%', visibleIndex: i });
-        }
+            onCard(card, i, { xPos, arcY, rotation, top: '30%' });
+        });
+        
+        // Bottom row
+        const bottomTotalW = cardW + (bottomRow.length - 1) * overlap;
+        const bottomStartX = -bottomTotalW / 2 + cardW / 2;
+        
+        bottomRow.forEach((card, i) => {
+            const globalIndex = half + i;
+            const xPos = bottomStartX + i * overlap;
+            const progress = bottomRow.length > 1 ? i / (bottomRow.length - 1) : 0.5;
+            const arcY = -Math.sin(progress * Math.PI) * arcHeight;
+            const rotation = (progress - 0.5) * maxRotation * 2;
+            onCard(card, globalIndex, { xPos, arcY, rotation, top: '72%' });
+        });
     } else {
-        // Desktop: Single row (no arc)
+        // Single row (desktop)
         const totalW = cardW + (total - 1) * overlap;
         const startX = -totalW / 2 + cardW / 2;
         
@@ -2033,7 +1896,6 @@ function createCardElement(card, index) {
 // Mobile Arc Selection State
 let arcSelectionState = null;
 let stagedCard = null; // Card waiting to be placed
-window.mobileArcScrollOffset = 0; // Global scroll offset for visible window
 
 function triggerHaptic(style = 'light') {
     // Try iOS Haptic Engine first (for PWA/web apps with haptic support)
@@ -2049,75 +1911,12 @@ function triggerHaptic(style = 'light') {
             case 'medium': navigator.vibrate(15); break;
             case 'heavy': navigator.vibrate(30); break;
             case 'tick': navigator.vibrate(4); break;
-            case 'hardstop': navigator.vibrate([20, 30, 20]); break;
         }
     }
 }
 
-// Preview minimap element
-let previewElement = null;
-
-function createPreviewMinimap() {
-    if (previewElement) return previewElement;
-    
-    const surfaceContent = document.getElementById('readingSurfaceContent');
-    if (!surfaceContent) return null;
-    
-    previewElement = document.createElement('div');
-    previewElement.className = 'arc-preview-minimap';
-    previewElement.innerHTML = `
-        <div class="arc-preview-track">
-            <div class="arc-preview-cards"></div>
-            <div class="arc-preview-window"></div>
-        </div>
-    `;
-    surfaceContent.appendChild(previewElement);
-    
-    // Draw 78 tiny card indicators
-    const cardsContainer = previewElement.querySelector('.arc-preview-cards');
-    for (let i = 0; i < 78; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'arc-preview-dot';
-        cardsContainer.appendChild(dot);
-    }
-    
-    return previewElement;
-}
-
-function showPreviewMinimap() {
-    const preview = createPreviewMinimap();
-    if (preview) {
-        preview.classList.add('visible');
-        updatePreviewWindow();
-    }
-}
-
-function hidePreviewMinimap() {
-    if (previewElement) {
-        previewElement.classList.remove('visible');
-    }
-}
-
-function updatePreviewWindow() {
-    if (!previewElement) return;
-    
-    const windowEl = previewElement.querySelector('.arc-preview-window');
-    if (!windowEl) return;
-    
-    const totalCards = deck.length;
-    const visibleCount = Math.min(26, totalCards);
-    const scrollOffset = window.mobileArcScrollOffset || 0;
-    
-    // Calculate window position as percentage
-    const windowWidthPercent = (visibleCount / totalCards) * 100;
-    const windowLeftPercent = (scrollOffset / totalCards) * 100;
-    
-    windowEl.style.width = windowWidthPercent + '%';
-    windowEl.style.left = windowLeftPercent + '%';
-}
-
 function handleDeckTouchStart(e) {
-    // If there's already a staged card, place it on tap or allow drag
+    // If there's already a staged card, use normal drag for desktop-style interaction
     if (stagedCard) {
         startDrag(e);
         return;
@@ -2133,10 +1932,7 @@ function handleDeckTouchStart(e) {
     const touch = e.touches[0];
     const startX = touch.clientX;
     const startY = touch.clientY;
-    let lastX = startX;
-    let lastY = startY;
-    let lastTime = Date.now();
-    let velocityX = 0;
+    const startTime = Date.now();
     
     let longPressTriggered = false;
     let hasMoved = false;
@@ -2145,23 +1941,13 @@ function handleDeckTouchStart(e) {
     const longPressTimer = setTimeout(() => {
         longPressTriggered = true;
         triggerHaptic('medium');
-        initMobileArcSelection(startX);
+        initArcSelection(touch.clientX);
     }, 300); // 300ms for long press
     
     const onTouchMove = (e) => {
         const touch = e.touches[0];
         const dx = touch.clientX - startX;
         const dy = touch.clientY - startY;
-        const now = Date.now();
-        const dt = now - lastTime;
-        
-        // Track velocity
-        if (dt > 0) {
-            velocityX = (touch.clientX - lastX) / dt;
-        }
-        lastX = touch.clientX;
-        lastY = touch.clientY;
-        lastTime = now;
         
         // If moved too much before long press, cancel and start normal drag
         if (!longPressTriggered && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
@@ -2172,12 +1958,10 @@ function handleDeckTouchStart(e) {
             return;
         }
         
-        // If in arc selection mode, handle scrolling
+        // If in arc selection mode, handle rotation
         if (longPressTriggered && arcSelectionState) {
             e.preventDefault();
-            const moveDx = touch.clientX - arcSelectionState.lastX;
-            handleArcScroll(moveDx, velocityX);
-            arcSelectionState.lastX = touch.clientX;
+            handleArcRotation(touch.clientX);
         }
     };
     
@@ -2185,15 +1969,16 @@ function handleDeckTouchStart(e) {
         clearTimeout(longPressTimer);
         
         if (longPressTriggered && arcSelectionState) {
+            // Check for swipe up
             const touch = e.changedTouches[0];
             const dy = touch.clientY - startY;
             
-            if (dy < -40) {
-                // Swipe up - select the centered card
-                selectCenteredCard();
+            if (dy < -30) {
+                // Swipe up - stage the selected card
+                stageSelectedCard();
             } else {
-                // Released without swipe up - apply momentum then deactivate
-                applyMomentum(velocityX);
+                // Just released - cancel selection
+                cancelArcSelection();
             }
         }
         
@@ -2209,129 +1994,74 @@ function handleDeckTouchStart(e) {
     document.addEventListener('touchend', onTouchEnd);
 }
 
-function initMobileArcSelection(initialX) {
-    const totalCards = deck.length;
-    if (totalCards === 0) return;
+function initArcSelection(clientX) {
+    const cards = Array.from(deckContainer.querySelectorAll('.card'));
+    if (cards.length === 0) return;
     
     deckContainer.classList.add('arc-selection-active');
-    showPreviewMinimap();
     
-    // Find center card index in visible window
-    const visibleCount = Math.min(26, totalCards);
-    const centerVisibleIndex = Math.floor(visibleCount / 2);
-    const scrollOffset = window.mobileArcScrollOffset || 0;
-    const centeredGlobalIndex = scrollOffset + centerVisibleIndex;
+    // Calculate which card is nearest to touch
+    const centerIndex = findNearestCardIndex(clientX, cards);
     
     arcSelectionState = {
-        totalCards,
-        visibleCount,
-        scrollOffset,
-        centeredIndex: centeredGlobalIndex,
-        lastX: initialX || 0,
-        accumulatedDx: 0
+        cards,
+        currentIndex: centerIndex,
+        startX: clientX,
+        lastX: clientX
     };
     
-    updateMobileArcDisplay();
+    updateArcCenteredCard(centerIndex);
 }
 
-function handleArcScroll(dx, velocity) {
-    if (!arcSelectionState) return;
-    
-    const { totalCards, visibleCount } = arcSelectionState;
-    const maxOffset = totalCards - visibleCount;
-    
-    // Sensitivity: pixels per card scroll
-    const sensitivity = 12; // Lower = more sensitive
-    
-    arcSelectionState.accumulatedDx = (arcSelectionState.accumulatedDx || 0) + dx;
-    
-    // Calculate how many cards to scroll
-    const cardsDelta = Math.round(arcSelectionState.accumulatedDx / sensitivity);
-    
-    if (cardsDelta !== 0) {
-        const currentOffset = window.mobileArcScrollOffset || 0;
-        let newOffset = currentOffset - cardsDelta; // Negative because drag right = scroll left
-        
-        // Hard stops at ends
-        const wasAtStart = currentOffset <= 0;
-        const wasAtEnd = currentOffset >= maxOffset;
-        
-        newOffset = Math.max(0, Math.min(maxOffset, newOffset));
-        
-        const nowAtStart = newOffset <= 0;
-        const nowAtEnd = newOffset >= maxOffset;
-        
-        // Haptic feedback for hitting ends
-        if ((nowAtStart && !wasAtStart) || (nowAtEnd && !wasAtEnd)) {
-            triggerHaptic('hardstop');
-        } else if (newOffset !== currentOffset) {
-            // Tick for each card scrolled
-            triggerHaptic('tick');
-        }
-        
-        window.mobileArcScrollOffset = newOffset;
-        arcSelectionState.scrollOffset = newOffset;
-        arcSelectionState.accumulatedDx = 0;
-        
-        // Update centered index
-        const centerVisibleIndex = Math.floor(visibleCount / 2);
-        arcSelectionState.centeredIndex = newOffset + centerVisibleIndex;
-        
-        updateMobileArcDisplay();
-        updatePreviewWindow();
-    }
-}
-
-function applyMomentum(velocity) {
-    if (!arcSelectionState) return;
-    
-    // If velocity is significant, animate momentum
-    if (Math.abs(velocity) > 0.3) {
-        let currentVelocity = velocity * 50; // Scale up
-        const friction = 0.92;
-        
-        const animate = () => {
-            if (!arcSelectionState || Math.abs(currentVelocity) < 1) {
-                endMobileArcSelection();
-                return;
-            }
-            
-            handleArcScroll(currentVelocity, 0);
-            currentVelocity *= friction;
-            
-            requestAnimationFrame(animate);
-        };
-        
-        animate();
-    } else {
-        endMobileArcSelection();
-    }
-}
-
-function endMobileArcSelection() {
-    hidePreviewMinimap();
-    deckContainer.classList.remove('arc-selection-active');
-    
-    // Remove centered highlight
-    const cards = deckContainer.querySelectorAll('.card');
-    cards.forEach(card => card.classList.remove('arc-centered'));
-    
-    arcSelectionState = null;
-}
-
-function updateMobileArcDisplay() {
-    if (!arcSelectionState) return;
-    
-    // Re-render deck with new scroll offset
-    renderMobileArc();
-    
-    // Highlight centered card
-    const { visibleCount } = arcSelectionState;
-    const centerVisibleIndex = Math.floor(visibleCount / 2);
-    const cards = deckContainer.querySelectorAll('.card');
+function findNearestCardIndex(clientX, cards) {
+    let nearestIndex = 0;
+    let nearestDist = Infinity;
     
     cards.forEach((card, i) => {
-        if (i === centerVisibleIndex) {
+        const rect = card.getBoundingClientRect();
+        const cardCenterX = rect.left + rect.width / 2;
+        const dist = Math.abs(clientX - cardCenterX);
+        if (dist < nearestDist) {
+            nearestDist = dist;
+            nearestIndex = i;
+        }
+    });
+    
+    return nearestIndex;
+}
+
+function handleArcRotation(clientX) {
+    if (!arcSelectionState) return;
+    
+    const { cards, currentIndex, lastX } = arcSelectionState;
+    const dx = clientX - lastX;
+    
+    // Determine card width for sensitivity
+    const cardWidth = cards[0]?.getBoundingClientRect().width || 60;
+    const sensitivity = cardWidth * 0.6; // Move ~60% of card width to switch
+    
+    arcSelectionState.accumulatedDx = (arcSelectionState.accumulatedDx || 0) + dx;
+    arcSelectionState.lastX = clientX;
+    
+    // Check if we've moved enough to switch cards
+    if (Math.abs(arcSelectionState.accumulatedDx) > sensitivity) {
+        const direction = arcSelectionState.accumulatedDx > 0 ? -1 : 1; // Swipe right = previous card
+        const newIndex = Math.max(0, Math.min(cards.length - 1, currentIndex + direction));
+        
+        if (newIndex !== currentIndex) {
+            arcSelectionState.currentIndex = newIndex;
+            arcSelectionState.accumulatedDx = 0;
+            triggerHaptic('tick');
+            updateArcCenteredCard(newIndex);
+        }
+    }
+}
+
+function updateArcCenteredCard(index) {
+    if (!arcSelectionState) return;
+    
+    arcSelectionState.cards.forEach((card, i) => {
+        if (i === index) {
             card.classList.add('arc-centered');
         } else {
             card.classList.remove('arc-centered');
@@ -2339,69 +2069,42 @@ function updateMobileArcDisplay() {
     });
 }
 
-function renderMobileArc() {
-    deckContainer.innerHTML = '';
-    const { cardW, overlap } = getCardDimensions();
-    
-    const totalCards = deck.length;
-    const visibleCount = Math.min(26, totalCards);
-    const scrollOffset = window.mobileArcScrollOffset || 0;
-    const startIndex = Math.max(0, Math.min(totalCards - visibleCount, scrollOffset));
-    
-    const arcHeight = 25;
-    const maxRotation = 18;
-    const mobileOverlap = Math.min(overlap * 1.2, cardW * 0.65);
-    
-    const totalW = cardW + (visibleCount - 1) * mobileOverlap;
-    const startX = -totalW / 2 + cardW / 2;
-    
-    for (let i = 0; i < visibleCount && (startIndex + i) < totalCards; i++) {
-        const globalIndex = startIndex + i;
-        const card = deck[globalIndex];
-        const xPos = startX + i * mobileOverlap;
-        const progress = visibleCount > 1 ? i / (visibleCount - 1) : 0.5;
-        const arcY = -Math.sin(progress * Math.PI) * arcHeight;
-        const rotation = (progress - 0.5) * maxRotation * 2;
-        
-        const el = createCardElement(card, globalIndex);
-        el.style.left = '50%';
-        el.style.top = '50%';
-        el.style.setProperty('--base-x', xPos + 'px');
-        el.style.setProperty('--base-y', arcY + 'px');
-        el.style.setProperty('--base-rot', rotation + 'deg');
-        el.style.transform = `translate(-50%, -50%) translateX(${xPos}px) translateY(${arcY}px) rotate(${rotation}deg)`;
-        el.style.zIndex = i;
-        
-        deckContainer.appendChild(el);
-    }
-}
-
-function selectCenteredCard() {
+function stageSelectedCard() {
     if (!arcSelectionState) return;
     
-    const { centeredIndex, visibleCount } = arcSelectionState;
-    const centerVisibleIndex = Math.floor(visibleCount / 2);
-    const cards = deckContainer.querySelectorAll('.card');
-    const selectedCard = cards[centerVisibleIndex];
+    const { cards, currentIndex } = arcSelectionState;
+    const selectedCard = cards[currentIndex];
     
     if (selectedCard) {
         triggerHaptic('medium');
         
-        // Stage the card
+        // Remove centered class, add staged class
         selectedCard.classList.remove('arc-centered');
         selectedCard.classList.add('card-staged');
+        
+        // Store reference to staged card
         stagedCard = selectedCard;
-        stagedCard.dataset.deckIndex = centeredIndex;
         
         // Dim other cards
         cards.forEach((card, i) => {
-            if (i !== centerVisibleIndex) {
+            if (i !== currentIndex) {
                 card.style.opacity = '0.4';
             }
         });
     }
     
-    hidePreviewMinimap();
+    // Clean up arc selection state
+    deckContainer.classList.remove('arc-selection-active');
+    arcSelectionState = null;
+}
+
+function cancelArcSelection() {
+    if (!arcSelectionState) return;
+    
+    arcSelectionState.cards.forEach(card => {
+        card.classList.remove('arc-centered');
+    });
+    
     deckContainer.classList.remove('arc-selection-active');
     arcSelectionState = null;
 }
@@ -2411,10 +2114,6 @@ function cancelStagedCard() {
     
     stagedCard.classList.remove('card-staged');
     stagedCard = null;
-    
-    // Restore opacity of all deck cards and re-render
-    window.mobileArcScrollOffset = 0;
-    renderDeck();
     
     // Restore opacity of all deck cards
     const cards = deckContainer.querySelectorAll('.card');
@@ -2910,53 +2609,6 @@ resetBtn.addEventListener('click', () => {
     localStorage.removeItem(STORAGE_KEYS.CURRENT_READING);
     initializeDeck();
 });
-
-// Mobile Menu
-const menuBtn = document.getElementById('menuBtn');
-const mobileMenu = document.getElementById('mobileMenu');
-const mobileShuffleBtn = document.getElementById('mobileShuffleBtn');
-const mobileResetBtn = document.getElementById('mobileResetBtn');
-const mobileReversalsBtn = document.getElementById('mobileReversalsBtn');
-const mobileSpreadBtn = document.getElementById('mobileSpreadBtn');
-
-menuBtn.addEventListener('click', () => {
-    mobileMenu.classList.toggle('open');
-});
-
-// Close menu when clicking outside
-document.addEventListener('click', (e) => {
-    if (!menuBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
-        mobileMenu.classList.remove('open');
-    }
-});
-
-// Mobile menu actions - trigger the same handlers as desktop buttons
-mobileShuffleBtn.addEventListener('click', () => {
-    shuffleBtn.click();
-    mobileMenu.classList.remove('open');
-});
-
-mobileResetBtn.addEventListener('click', () => {
-    resetBtn.click();
-    mobileMenu.classList.remove('open');
-});
-
-mobileReversalsBtn.addEventListener('click', () => {
-    reversalsToggle.click();
-    // Update active state on mobile button
-    mobileReversalsBtn.classList.toggle('active', reversalsToggle.classList.contains('active'));
-    mobileMenu.classList.remove('open');
-});
-
-mobileSpreadBtn.addEventListener('click', () => {
-    spreadBtn.click();
-    mobileMenu.classList.remove('open');
-});
-
-// Sync reversals state on load
-if (reversalsToggle.classList.contains('active')) {
-    mobileReversalsBtn.classList.add('active');
-}
 
 // Reversals toggle
 reversalsToggle.addEventListener('click', () => {
