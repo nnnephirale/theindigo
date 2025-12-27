@@ -546,7 +546,7 @@
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 0.5rem 0.5rem 1rem;
+            padding: 1rem 0;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
@@ -555,11 +555,9 @@
             overscroll-behavior: contain;
         }
         .card-picker-row {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            min-height: 75px;
-            padding: 0.25rem 0;
+            position: relative;
+            width: 100%;
+            min-height: 80px;
             opacity: 0;
             animation: rowFadeIn 0.4s ease-out forwards;
         }
@@ -579,18 +577,15 @@
         }
         
         .card-picker-card {
-            width: var(--deck-card-width);
-            height: var(--deck-card-height);
-            margin: 0 calc(var(--card-overlap) * -0.9);
+            position: absolute;
+            left: 50%;
+            top: 50%;
             cursor: pointer;
             transition: transform 0.15s ease, z-index 0s;
-            position: relative;
-            flex-shrink: 0;
         }
         .card-picker-card:hover,
         .card-picker-card:active {
-            transform: scale(1.2) translateY(-10px) !important;
-            z-index: 10;
+            z-index: 100 !important;
         }
         .card-picker-card-back {
             width: 100%;
@@ -2262,6 +2257,9 @@ function renderPickerCards() {
     const cardsContainer = modal.querySelector('.card-picker-cards');
     cardsContainer.innerHTML = '';
     
+    // Get card dimensions (same as dock)
+    const { cardW, overlap } = getCardDimensions();
+    
     // Always render 3 rows with 26 cards each
     const cardsPerRow = 26;
     const rows = [
@@ -2270,22 +2268,36 @@ function renderPickerCards() {
         deck.slice(cardsPerRow * 2)
     ];
     
-    // Arc settings matching the dock
+    // Arc settings matching the dock exactly
     const arcHeight = 20;
     const maxRotation = 15;
+    const mobileOverlap = Math.min(overlap * 1.1, cardW * 0.6);
+    
+    // Calculate total width and starting position (same as dock)
+    const totalW = cardW + (cardsPerRow - 1) * mobileOverlap;
+    const startX = -totalW / 2 + cardW / 2;
     
     rows.forEach((rowCards, rowIndex) => {
         const rowEl = document.createElement('div');
         rowEl.className = 'card-picker-row';
+        // Set row height to accommodate arc + card height
+        rowEl.style.height = (cardW * 1.6 + arcHeight + 10) + 'px';
         const startIndex = rowIndex * cardsPerRow;
         
         rowCards.forEach((card, i) => {
             const globalIndex = startIndex + i;
-            const cardEl = createPickerCard(card, globalIndex);
+            const cardEl = createPickerCard(card, globalIndex, cardW);
+            
+            // Calculate position exactly like dock
+            const xPos = startX + i * mobileOverlap;
             const progress = rowCards.length > 1 ? i / (rowCards.length - 1) : 0.5;
-            const rotation = (progress - 0.5) * maxRotation * 2;
             const arcY = -Math.sin(progress * Math.PI) * arcHeight;
-            cardEl.style.transform = `rotate(${rotation}deg) translateY(${arcY}px)`;
+            const rotation = (progress - 0.5) * maxRotation * 2;
+            
+            // Apply transform like dock does
+            cardEl.style.transform = `translate(-50%, -50%) translateX(${xPos}px) translateY(${arcY}px) rotate(${rotation}deg)`;
+            cardEl.style.zIndex = i < cardsPerRow / 2 ? i : cardsPerRow - i;
+            
             rowEl.appendChild(cardEl);
         });
         
@@ -2293,11 +2305,16 @@ function renderPickerCards() {
     });
 }
 
-function createPickerCard(card, index) {
+function createPickerCard(card, index, cardW) {
     const el = document.createElement('div');
     el.className = 'card-picker-card';
     el.dataset.cardId = card.id;
     el.dataset.index = index;
+    
+    // Set size explicitly (same as dock cards)
+    el.style.width = cardW + 'px';
+    el.style.height = (cardW * 1.6) + 'px';
+    
     el.innerHTML = `<div class="card-picker-card-back"></div>`;
     
     el.addEventListener('click', () => {
