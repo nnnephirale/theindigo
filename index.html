@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Tarot Reader</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -38,15 +38,23 @@
             --border: 240 3.7% 15.9%;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
+        html, body {
             font-family: 'Inter', -apple-system, sans-serif;
             background: hsl(var(--background));
             color: hsl(var(--foreground));
-            min-height: 100vh;
+            height: 100%;
             overflow: hidden;
             transition: background-color 0.2s, color 0.2s;
             user-select: none;
             -webkit-user-select: none;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: none;
+            touch-action: none;
+        }
+        body {
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
         .app-container { display: flex; flex-direction: column; height: 100vh; }
         header {
@@ -148,6 +156,7 @@
             position: relative; overflow: hidden;
             min-height: 200px;
             border-radius: var(--radius) var(--radius) 0 0;
+            touch-action: manipulation;
         }
         .reading-surface::before {
             content: '';
@@ -185,6 +194,7 @@
             position: absolute; inset: 0;
             transform-origin: center center;
             transition: transform 0.15s ease;
+            touch-action: manipulation;
         }
         .reading-surface-content::before {
             content: 'Drag cards here'; position: absolute; top: 50%; left: 50%;
@@ -397,12 +407,42 @@
             /* Hide desktop deck controls on mobile */
             .deck-controls { display: none; }
             
-            .deck-container { height: clamp(140px, 22vh, 200px); }
-            .deck-area.docked .deck-container { 
-                transform: translateY(calc(100% - 78px)); 
-                clip-path: inset(0 0 calc(100% - 78px) 0);
+            /* Hide instructions on mobile */
+            .instructions { display: none; }
+            
+            /* Mobile deck always in docked appearance */
+            .deck-container { 
+                height: 100px;
             }
-            .deck-area { height: 78px; }
+            .deck-area { 
+                height: 80px;
+                flex-shrink: 0;
+            }
+            .deck-area .deck-container { 
+                transform: translateY(calc(100% - 80px)); 
+                clip-path: inset(0 0 calc(100% - 80px) 0);
+            }
+            /* Disable hover expansion on mobile - tap opens modal instead */
+            .deck-area:hover .deck-container,
+            .deck-area.docked:hover .deck-container {
+                transform: translateY(calc(100% - 80px)); 
+                clip-path: inset(0 0 calc(100% - 80px) 0);
+            }
+            
+            /* Reading surface fills available space */
+            .reading-surface {
+                flex: 1;
+                min-height: 0;
+            }
+            
+            /* Ensure main takes remaining space */
+            main {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                overflow: hidden;
+            }
         }
         .card {
             width: var(--deck-card-width); height: var(--deck-card-height); position: absolute; cursor: grab;
@@ -489,6 +529,9 @@
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
         }
         .card-picker-row {
             display: flex;
@@ -1998,38 +2041,25 @@ function isMobileView() {
 function applyDeckLayout(cards, cardW, overlap, onCard) {
     const total = cards.length;
     
-    if (isMobileView() && total > 20) {
-        // Two arched rows for mobile - both arch upward
-        const half = Math.ceil(total / 2);
-        const topRow = cards.slice(0, half);
-        const bottomRow = cards.slice(half);
+    if (isMobileView()) {
+        // Mobile: Single arc showing 26 cards (subset of deck)
+        const visibleCount = Math.min(26, total);
         const arcHeight = 20;
         const maxRotation = 15;
+        const mobileOverlap = Math.min(overlap * 1.1, cardW * 0.6);
         
-        // Top row
-        const topTotalW = cardW + (topRow.length - 1) * overlap;
-        const topStartX = -topTotalW / 2 + cardW / 2;
+        const totalW = cardW + (visibleCount - 1) * mobileOverlap;
+        const startX = -totalW / 2 + cardW / 2;
         
-        topRow.forEach((card, i) => {
-            const xPos = topStartX + i * overlap;
-            const progress = topRow.length > 1 ? i / (topRow.length - 1) : 0.5;
+        // Show first 26 cards (evenly distributed from deck if desired, or just first 26)
+        for (let i = 0; i < visibleCount && i < total; i++) {
+            const card = cards[i];
+            const xPos = startX + i * mobileOverlap;
+            const progress = visibleCount > 1 ? i / (visibleCount - 1) : 0.5;
             const arcY = -Math.sin(progress * Math.PI) * arcHeight;
             const rotation = (progress - 0.5) * maxRotation * 2;
-            onCard(card, i, { xPos, arcY, rotation, top: '30%' });
-        });
-        
-        // Bottom row
-        const bottomTotalW = cardW + (bottomRow.length - 1) * overlap;
-        const bottomStartX = -bottomTotalW / 2 + cardW / 2;
-        
-        bottomRow.forEach((card, i) => {
-            const globalIndex = half + i;
-            const xPos = bottomStartX + i * overlap;
-            const progress = bottomRow.length > 1 ? i / (bottomRow.length - 1) : 0.5;
-            const arcY = -Math.sin(progress * Math.PI) * arcHeight;
-            const rotation = (progress - 0.5) * maxRotation * 2;
-            onCard(card, globalIndex, { xPos, arcY, rotation, top: '72%' });
-        });
+            onCard(card, i, { xPos, arcY, rotation, top: '50%' });
+        }
     } else {
         // Single row (desktop)
         const totalW = cardW + (total - 1) * overlap;
