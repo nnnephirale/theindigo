@@ -2056,8 +2056,8 @@ function applyDeckLayout(cards, cardW, overlap, onCard) {
             const progress = visibleCount > 1 ? i / (visibleCount - 1) : 0.5;
             const arcY = -Math.sin(progress * Math.PI) * arcHeight;
             const rotation = (progress - 0.5) * maxRotation * 2;
-            // Position cards at 75% so they appear in the visible portion of the docked container
-            onCard(card, i, { xPos, arcY, rotation, top: '75%' });
+            // Position cards at 30% so they appear in the visible portion of the docked container
+            onCard(card, i, { xPos, arcY, rotation, top: '30%' });
         }
     } else {
         // Single row (desktop)
