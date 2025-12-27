@@ -3032,14 +3032,18 @@ function createTextBox(x, y, width = null, height = null, showBorder = false, in
     box.dataset.textBoxId = id;
     
     // Convert to percentages if not already
-    const surfaceRect = readingSurface.getBoundingClientRect();
+    // Use content's actual dimensions (not transformed) for percentage calculation
+    const contentRect = readingSurfaceContent.getBoundingClientRect();
+    const contentWidth = contentRect.width / currentZoom;
+    const contentHeight = contentRect.height / currentZoom;
+    
     let percentX, percentY;
     if (usePercent) {
         percentX = x;
         percentY = y;
     } else {
-        percentX = (x / surfaceRect.width) * 100;
-        percentY = (y / surfaceRect.height) * 100;
+        percentX = (x / contentWidth) * 100;
+        percentY = (y / contentHeight) * 100;
     }
     
     box.style.left = percentX + '%';
@@ -3388,9 +3392,10 @@ readingSurface.addEventListener('mousedown', e => {
         return;
     }
     
-    const rect = readingSurface.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Use content rect to account for zoom/pan transform
+    const contentRect = readingSurfaceContent.getBoundingClientRect();
+    const x = (e.clientX - contentRect.left) / currentZoom;
+    const y = (e.clientY - contentRect.top) / currentZoom;
     
     textDrawState = {
         startX: x,
@@ -3406,9 +3411,10 @@ readingSurface.addEventListener('mousedown', e => {
 function onTextDraw(e) {
     if (!textDrawState) return;
     
-    const rect = readingSurface.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Use content rect to account for zoom/pan transform
+    const contentRect = readingSurfaceContent.getBoundingClientRect();
+    const x = (e.clientX - contentRect.left) / currentZoom;
+    const y = (e.clientY - contentRect.top) / currentZoom;
     
     const dx = Math.abs(x - textDrawState.startX);
     const dy = Math.abs(y - textDrawState.startY);
@@ -3457,9 +3463,10 @@ function onTextDrawEnd(e) {
     
     if (textDrawState.isDragging) {
         // Create text box with dragged dimensions
-        const rect = readingSurface.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        // Use content rect to account for zoom/pan transform
+        const contentRect = readingSurfaceContent.getBoundingClientRect();
+        const x = (e.clientX - contentRect.left) / currentZoom;
+        const y = (e.clientY - contentRect.top) / currentZoom;
         
         const left = Math.min(textDrawState.startX, x);
         const top = Math.min(textDrawState.startY, y);
