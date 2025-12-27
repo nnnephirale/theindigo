@@ -2365,29 +2365,39 @@ function selectCardFromPicker(card, index) {
     triggerHaptic('medium');
     closeCardPickerModal();
     
-    // Find the actual card element in the deck and stage it
-    const deckCards = deckContainer.querySelectorAll('.card');
-    let selectedEl = null;
+    // Create a staged card element (don't rely on it being in the visible deck)
+    const selectedEl = document.createElement('div');
+    selectedEl.className = 'card card-staged';
+    selectedEl.dataset.cardId = card.id;
+    selectedEl.dataset.index = index;
+    selectedEl.innerHTML = `
+        <div class="card-face card-back"></div>
+        <div class="card-face card-front">${getCardFrontContent(card)}</div>
+        <div class="dev-label">${card.id}</div>
+    `;
     
+    // Position it in the center of the deck container
+    selectedEl.style.left = '50%';
+    selectedEl.style.top = '30%';
+    selectedEl.style.transform = 'translate(-50%, -50%)';
+    selectedEl.style.zIndex = '200';
+    
+    // Add to deck container
+    deckContainer.appendChild(selectedEl);
+    
+    // Store reference
+    stagedCard = selectedEl;
+    stagedCard.dataset.deckIndex = index;
+    
+    // Dim other cards
+    const deckCards = deckContainer.querySelectorAll('.card:not(.card-staged)');
     deckCards.forEach(el => {
-        if (el.dataset.cardId === card.id) {
-            selectedEl = el;
-        }
+        el.style.opacity = '0.4';
     });
     
-    if (selectedEl) {
-        // Stage the card
-        selectedEl.classList.add('card-staged');
-        stagedCard = selectedEl;
-        stagedCard.dataset.deckIndex = index;
-        
-        // Dim other cards
-        deckCards.forEach(el => {
-            if (el !== selectedEl) {
-                el.style.opacity = '0.4';
-            }
-        });
-    }
+    // Add touch handler for dragging
+    selectedEl.addEventListener('touchstart', handleDeckTouchStart, { passive: false });
+    selectedEl.addEventListener('mousedown', startDrag);
 }
 
 function closeCardPickerModal() {
