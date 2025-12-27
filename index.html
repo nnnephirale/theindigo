@@ -412,21 +412,21 @@
             
             /* Mobile deck always in docked appearance */
             .deck-container { 
-                height: 100px;
+                height: 140px;
             }
             .deck-area { 
-                height: 80px;
+                height: 100px;
                 flex-shrink: 0;
             }
             .deck-area .deck-container { 
-                transform: translateY(calc(100% - 80px)); 
-                clip-path: inset(0 0 calc(100% - 80px) 0);
+                transform: translateY(calc(100% - 100px)); 
+                clip-path: inset(0 0 calc(100% - 100px) 0);
             }
             /* Disable hover expansion on mobile - tap opens modal instead */
             .deck-area:hover .deck-container,
             .deck-area.docked:hover .deck-container {
-                transform: translateY(calc(100% - 80px)); 
-                clip-path: inset(0 0 calc(100% - 80px) 0);
+                transform: translateY(calc(100% - 100px)); 
+                clip-path: inset(0 0 calc(100% - 100px) 0);
             }
             
             /* Reading surface fills available space */
