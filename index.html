@@ -2296,7 +2296,8 @@ function renderPickerCards() {
             
             // Apply transform like dock does
             cardEl.style.transform = `translate(-50%, -50%) translateX(${xPos}px) translateY(${arcY}px) rotate(${rotation}deg)`;
-            cardEl.style.zIndex = i < cardsPerRow / 2 ? i : cardsPerRow - i;
+            // Rightmost card on top (higher index = higher z-index)
+            cardEl.style.zIndex = i;
             
             rowEl.appendChild(cardEl);
         });
