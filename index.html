@@ -2261,8 +2261,16 @@ function setupPickerTouchTracking(modal) {
     let currentTouchCard = null;
     let touchMoved = false;
     
+    // Helper to clear all touch-active states
+    function clearAllTouchActive() {
+        modal.querySelectorAll('.card-picker-card.touch-active').forEach(card => {
+            card.classList.remove('touch-active');
+        });
+    }
+    
     cardsContainer.addEventListener('touchstart', (e) => {
         touchMoved = false;
+        clearAllTouchActive(); // Ensure clean state
         const touch = e.touches[0];
         const card = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.card-picker-card');
         if (card) {
@@ -2273,33 +2281,35 @@ function setupPickerTouchTracking(modal) {
     
     cardsContainer.addEventListener('touchmove', (e) => {
         const touch = e.touches[0];
-        // Temporarily hide current card to find what's underneath
+        
+        // Clear current card's active state and pointer events before detection
+        clearAllTouchActive();
         if (currentTouchCard) {
             currentTouchCard.style.pointerEvents = 'none';
         }
+        
         const card = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.card-picker-card');
+        
+        // Restore pointer events
         if (currentTouchCard) {
             currentTouchCard.style.pointerEvents = '';
         }
         
-        if (card !== currentTouchCard) {
-            touchMoved = true;
-            // Remove active state from old card
-            if (currentTouchCard) {
-                currentTouchCard.classList.remove('touch-active');
-            }
-            // Add active state to new card
-            if (card) {
-                card.classList.add('touch-active');
+        if (card) {
+            card.classList.add('touch-active');
+            if (card !== currentTouchCard) {
+                touchMoved = true;
                 triggerHaptic('light');
+                currentTouchCard = card;
             }
-            currentTouchCard = card;
+        } else {
+            currentTouchCard = null;
         }
     }, { passive: true });
     
     cardsContainer.addEventListener('touchend', (e) => {
+        clearAllTouchActive();
         if (currentTouchCard) {
-            currentTouchCard.classList.remove('touch-active');
             // Only handle selection here if user swiped between cards
             // Simple taps will be handled by the click event
             if (touchMoved) {
@@ -2316,10 +2326,8 @@ function setupPickerTouchTracking(modal) {
     });
     
     cardsContainer.addEventListener('touchcancel', () => {
-        if (currentTouchCard) {
-            currentTouchCard.classList.remove('touch-active');
-            currentTouchCard = null;
-        }
+        clearAllTouchActive();
+        currentTouchCard = null;
     }, { passive: true });
 }
 
