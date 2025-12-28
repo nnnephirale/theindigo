@@ -2603,7 +2603,10 @@ let pickerScrubMode = false;
 let pickerScrubTimer = null;
 let pickerScrubStartX = 0;
 let pickerScrubStartY = 0;
+let stickyCardCenterX = 0;
+let stickyCardCenterY = 0;
 const SCRUB_INITIATE_DELAY = 150; // ms before scrub mode activates
+const STICKY_ZONE_RADIUS = 25; // px - must move this far from card center to switch
 
 function initPickerScrubSelection(modal) {
     const cardsContainer = modal.querySelector('.card-picker-cards');
@@ -2628,7 +2631,7 @@ function handlePickerTouchStart(e) {
         // Hide nav bar during scrub
         hidePickerNav();
         // Lift card under finger
-        updateScrubSelection(touch.clientX, touch.clientY);
+        updateScrubSelection(touch.clientX, touch.clientY, true); // force update on first touch
         triggerHaptic('light');
     }, SCRUB_INITIATE_DELAY);
 }
@@ -2641,7 +2644,7 @@ function handlePickerTouchMove(e) {
     if (pickerScrubMode) {
         // In scrub mode - update selection based on finger position
         e.preventDefault(); // Prevent scrolling while scrubbing
-        updateScrubSelection(touch.clientX, touch.clientY);
+        updateScrubSelection(touch.clientX, touch.clientY, false);
     } else if (pickerScrubTimer) {
         // Not yet in scrub mode - check if moved too much (allow some tolerance)
         const dx = Math.abs(touch.clientX - pickerScrubStartX);
@@ -2664,9 +2667,10 @@ function handlePickerTouchEnd(e) {
     if (pickerScrubMode) {
         pickerScrubMode = false;
         
-        // Select the currently focused card
+        // Show nav bar for confirmation (don't auto-select)
         if (pickerFocusedIndex >= 0) {
-            confirmPickerSelection();
+            showPickerNav();
+            updatePickerNavButtons();
         }
     }
 }
@@ -2684,7 +2688,20 @@ function handlePickerTouchCancel() {
     }
 }
 
-function updateScrubSelection(clientX, clientY) {
+function updateScrubSelection(clientX, clientY, forceUpdate) {
+    // Check if we're still within the sticky zone of the current card
+    if (!forceUpdate && pickerFocusedIndex >= 0) {
+        const distFromSticky = Math.sqrt(
+            Math.pow(clientX - stickyCardCenterX, 2) + 
+            Math.pow(clientY - stickyCardCenterY, 2)
+        );
+        
+        if (distFromSticky < STICKY_ZONE_RADIUS) {
+            // Still in sticky zone, don't switch
+            return;
+        }
+    }
+    
     // Find which card is under the finger
     // Temporarily hide pointer-events on current focused card to look beneath
     const currentFocused = pickerFocusedIndex >= 0 ? pickerAllCards[pickerFocusedIndex]?.element : null;
@@ -2704,13 +2721,21 @@ function updateScrubSelection(clientX, clientY) {
     if (cardEl) {
         const index = parseInt(cardEl.dataset.globalIndex, 10);
         if (index !== pickerFocusedIndex && !isNaN(index)) {
-            focusPickerCardSilent(index); // Focus without showing nav
+            focusPickerCardSilent(index);
+            
+            // Update sticky zone center to new card's center
+            const cardRect = cardEl.getBoundingClientRect();
+            stickyCardCenterX = cardRect.left + cardRect.width / 2;
+            stickyCardCenterY = cardRect.top + cardRect.height / 2;
+            
             triggerHaptic('light');
         }
     } else {
-        // Finger is in gap - unfocus all
+        // Finger is in gap - unfocus all and reset sticky zone
         if (pickerFocusedIndex >= 0) {
             unfocusCurrentCard();
+            stickyCardCenterX = 0;
+            stickyCardCenterY = 0;
         }
     }
 }
