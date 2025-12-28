@@ -567,28 +567,23 @@
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 2.5rem 0 1rem 0; /* More top padding for lifted cards */
+            padding: 2.5rem 0 1rem 0;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Vertically center the rows */
+            justify-content: center;
             touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
+            transition: padding 0.25s ease-out;
+        }
+        /* Add bottom padding when nav visible so content doesn't hide behind nav */
+        .card-picker-modal.nav-visible .card-picker-cards {
+            padding-bottom: 80px;
         }
         .card-picker-cards-inner {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            transform: translateY(75px);
-            transition: transform 0.25s ease-out;
-        }
-        /* When nav is visible, slide content up */
-        .card-picker-modal.nav-visible .card-picker-cards-inner {
-            transform: translateY(0);
-        }
-        /* Add bottom padding when nav visible so content doesn't hide behind nav */
-        .card-picker-modal.nav-visible .card-picker-cards {
-            padding-bottom: 70px;
         }
         .card-picker-row {
             position: relative;
