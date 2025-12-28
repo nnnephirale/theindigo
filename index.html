@@ -1104,10 +1104,22 @@
             gap: 0.5rem;
         }
         .spread-reference-notch {
-            width: 32px; height: 4px;
-            background: hsl(var(--muted-foreground) / 0.4);
-            border-radius: 2px;
+            width: 12px; height: 12px;
             flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease-out;
+        }
+        .spread-reference-notch::before {
+            content: '';
+            width: 8px; height: 8px;
+            border-left: 2px solid hsl(var(--muted-foreground));
+            border-bottom: 2px solid hsl(var(--muted-foreground));
+            transform: rotate(-45deg) translateY(-2px);
+        }
+        .spread-reference.minimized .spread-reference-notch {
+            transform: rotate(180deg);
         }
         .spread-reference-title {
             font-size: 0.625rem; font-weight: 600; color: hsl(var(--foreground));
@@ -4138,6 +4150,101 @@ readingSurface.addEventListener('wheel', e => {
     }
 }, { passive: false });
 
+// ============================================
+// MOBILE PINCH-TO-ZOOM AND TWO-FINGER PAN
+// ============================================
+
+let pinchStartDistance = 0;
+let pinchStartZoom = 1;
+let pinchCenterX = 0;
+let pinchCenterY = 0;
+let isTwoFingerGesture = false;
+let twoFingerPanStartX = 0;
+let twoFingerPanStartY = 0;
+let twoFingerStartPanX = 0;
+let twoFingerStartPanY = 0;
+
+function getDistance(touch1, touch2) {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+function getMidpoint(touch1, touch2) {
+    return {
+        x: (touch1.clientX + touch2.clientX) / 2,
+        y: (touch1.clientY + touch2.clientY) / 2
+    };
+}
+
+readingSurface.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+        // Two finger gesture starting
+        e.preventDefault();
+        isTwoFingerGesture = true;
+        
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        
+        // Store pinch start state
+        pinchStartDistance = getDistance(touch1, touch2);
+        pinchStartZoom = currentZoom;
+        
+        // Store pan start state
+        const midpoint = getMidpoint(touch1, touch2);
+        const rect = readingSurface.getBoundingClientRect();
+        pinchCenterX = midpoint.x - rect.left;
+        pinchCenterY = midpoint.y - rect.top;
+        twoFingerPanStartX = midpoint.x;
+        twoFingerPanStartY = midpoint.y;
+        twoFingerStartPanX = panX;
+        twoFingerStartPanY = panY;
+    }
+}, { passive: false });
+
+readingSurface.addEventListener('touchmove', e => {
+    if (e.touches.length === 2 && isTwoFingerGesture) {
+        e.preventDefault();
+        
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        
+        // Calculate new distance for pinch zoom
+        const currentDistance = getDistance(touch1, touch2);
+        const scale = currentDistance / pinchStartDistance;
+        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, pinchStartZoom * scale));
+        
+        // Calculate pan from midpoint movement
+        const midpoint = getMidpoint(touch1, touch2);
+        const panDeltaX = midpoint.x - twoFingerPanStartX;
+        const panDeltaY = midpoint.y - twoFingerPanStartY;
+        
+        // Apply zoom with center point
+        const oldZoom = currentZoom;
+        currentZoom = newZoom;
+        
+        // Adjust pan to zoom toward pinch center
+        const surfaceRect = readingSurface.getBoundingClientRect();
+        const contentCenterX = surfaceRect.width / 2;
+        const contentCenterY = surfaceRect.height / 2;
+        
+        const pointX = pinchCenterX - contentCenterX - twoFingerStartPanX;
+        const pointY = pinchCenterY - contentCenterY - twoFingerStartPanY;
+        
+        const zoomRatio = currentZoom / pinchStartZoom;
+        panX = twoFingerStartPanX - pointX * (zoomRatio - 1) + panDeltaX;
+        panY = twoFingerStartPanY - pointY * (zoomRatio - 1) + panDeltaY;
+        
+        updateTransform();
+    }
+}, { passive: false });
+
+readingSurface.addEventListener('touchend', e => {
+    if (e.touches.length < 2) {
+        isTwoFingerGesture = false;
+    }
+});
+
 // Space + drag to pan
 document.addEventListener('keydown', e => {
     if (e.code === 'Space' && !e.target.matches('input, textarea')) {
@@ -4224,6 +4331,9 @@ document.addEventListener('keydown', e => {
 // ============================================
 
 readingSurface.addEventListener('touchstart', e => {
+    // Ignore multi-touch (pinch/pan gestures)
+    if (e.touches.length > 1) return;
+    
     // Only handle if there's a staged card waiting to be placed
     if (!stagedCard) return;
     
