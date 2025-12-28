@@ -23,6 +23,8 @@
             --deck-card-height: calc(var(--deck-card-width) * 1.6);
             --placed-card-width: clamp(100px, 12vw, 150px);
             --placed-card-height: calc(var(--placed-card-width) * 1.6);
+            --mobile-spread-card-width: calc((100vw - 60px) / 4); /* 4 cards with gaps */
+            --mobile-spread-card-height: calc(var(--mobile-spread-card-width) * 1.6);
             --card-overlap: clamp(6px, 0.8vw, 10px);
         }
         .dark {
@@ -1026,6 +1028,53 @@
             background: transparent; 
             border-color: transparent;
             box-shadow: none;
+        }
+        
+        /* Mobile Spread Guided Mode */
+        .spread-slot.active-slot {
+            box-shadow: 0 0 20px rgba(128, 128, 128, 0.6), 0 0 40px rgba(128, 128, 128, 0.3);
+            border-color: hsl(var(--foreground) / 0.3);
+            z-index: 50;
+        }
+        .spread-slot.future-slot {
+            opacity: 0.4;
+        }
+        .spread-step-indicator {
+            position: absolute;
+            transform: translate(-50%, -100%);
+            margin-top: -8px;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: hsl(var(--foreground));
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            pointer-events: none;
+        }
+        .spread-step-indicator::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid hsl(var(--card));
+        }
+        
+        @media (max-width: 600px) {
+            /* Mobile spread card sizing */
+            body.mobile-spread-mode .spread-slot,
+            body.mobile-spread-mode .placed-card {
+                width: var(--mobile-spread-card-width) !important;
+                height: var(--mobile-spread-card-height) !important;
+            }
         }
         
         /* Spread Reference Panel */
@@ -2588,6 +2637,13 @@ function selectCardFromPicker(card, index) {
     
     // Re-render the deck (will show remaining cards at full opacity)
     renderDeck();
+    
+    // If in mobile spread guided mode, place directly in active slot
+    if (mobileSpreadMode) {
+        placeCardInActiveSlot(card);
+        updateDevPanel();
+        return;
+    }
     
     // Create a staged card element
     const selectedEl = document.createElement('div');
@@ -4274,6 +4330,11 @@ const SPREADS = {
 let currentSpread = null;
 let spreadSlots = [];
 
+// Mobile spread guided mode state
+let mobileSpreadMode = false;
+let currentSpreadStep = 0;
+let spreadStepIndicator = null;
+
 // Helper: Check if a spread position has a card placed on it
 function isSlotFilledByCard(pos) {
     return placedCards.some(p => {
@@ -4281,6 +4342,193 @@ function isSlotFilledByCard(pos) {
         const cardY = parseFloat(p.element.dataset.percentY);
         return Math.abs(cardX - pos.percentX) < 3 && Math.abs(cardY - pos.percentY) < 3;
     });
+}
+
+// Mobile Spread Guided Mode Functions
+function startMobileSpreadMode() {
+    if (!currentSpread || !isMobileView()) return;
+    
+    mobileSpreadMode = true;
+    currentSpreadStep = 0;
+    document.body.classList.add('mobile-spread-mode');
+    
+    // Create step indicator
+    createSpreadStepIndicator();
+    
+    // Update slot visual states and pan to first slot
+    updateMobileSpreadStep();
+}
+
+function endMobileSpreadMode() {
+    mobileSpreadMode = false;
+    document.body.classList.remove('mobile-spread-mode');
+    
+    // Remove step indicator
+    if (spreadStepIndicator) {
+        spreadStepIndicator.remove();
+        spreadStepIndicator = null;
+    }
+    
+    // Clear slot states
+    spreadSlots.forEach(s => {
+        s.element.classList.remove('active-slot', 'future-slot');
+    });
+}
+
+function createSpreadStepIndicator() {
+    if (spreadStepIndicator) spreadStepIndicator.remove();
+    
+    spreadStepIndicator = document.createElement('div');
+    spreadStepIndicator.className = 'spread-step-indicator';
+    readingSurfaceContent.appendChild(spreadStepIndicator);
+}
+
+function updateMobileSpreadStep() {
+    if (!mobileSpreadMode || !currentSpread) return;
+    
+    const totalSteps = currentSpread.positions.length;
+    
+    // Check if spread is complete
+    if (currentSpreadStep >= totalSteps) {
+        endMobileSpreadMode();
+        return;
+    }
+    
+    // Update slot visual states
+    spreadSlots.forEach((slot, index) => {
+        slot.element.classList.remove('active-slot', 'future-slot');
+        
+        if (index === currentSpreadStep) {
+            slot.element.classList.add('active-slot');
+        } else if (index > currentSpreadStep) {
+            slot.element.classList.add('future-slot');
+        }
+    });
+    
+    // Update step indicator
+    const currentPos = currentSpread.positions[currentSpreadStep];
+    const slotData = spreadSlots[currentSpreadStep];
+    
+    if (spreadStepIndicator && slotData) {
+        const posName = currentPos.name || `Position ${currentSpreadStep + 1}`;
+        spreadStepIndicator.textContent = `${currentSpreadStep + 1} of ${totalSteps}: ${posName}`;
+        
+        // Position indicator above the active slot
+        spreadStepIndicator.style.left = currentPos.percentX + '%';
+        spreadStepIndicator.style.top = currentPos.percentY + '%';
+    }
+    
+    // Pan to center the active slot
+    panToSpreadSlot(currentSpreadStep);
+}
+
+function panToSpreadSlot(stepIndex) {
+    if (!spreadSlots[stepIndex]) return;
+    
+    const pos = currentSpread.positions[stepIndex];
+    const surfaceRect = readingSurface.getBoundingClientRect();
+    const contentRect = readingSurfaceContent.getBoundingClientRect();
+    
+    // Calculate where the slot is in content coordinates
+    const slotX = (pos.percentX / 100) * contentRect.width;
+    const slotY = (pos.percentY / 100) * contentRect.height;
+    
+    // Calculate pan needed to center the slot in the viewport
+    const targetPanX = (surfaceRect.width / 2) - (slotX * currentZoom) - (contentRect.left - surfaceRect.left);
+    const targetPanY = (surfaceRect.height / 2) - (slotY * currentZoom) - (contentRect.top - surfaceRect.top);
+    
+    // Smoothly animate pan
+    const startPanX = panX;
+    const startPanY = panY;
+    const duration = 300;
+    const startTime = performance.now();
+    
+    function animatePan(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        
+        panX = startPanX + (targetPanX - startPanX) * eased;
+        panY = startPanY + (targetPanY - startPanY) * eased;
+        
+        readingSurfaceContent.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+        
+        if (progress < 1) {
+            requestAnimationFrame(animatePan);
+        }
+    }
+    
+    requestAnimationFrame(animatePan);
+}
+
+function advanceSpreadStep() {
+    if (!mobileSpreadMode) return;
+    
+    currentSpreadStep++;
+    updateMobileSpreadStep();
+}
+
+function placeCardInActiveSlot(card) {
+    if (!mobileSpreadMode || currentSpreadStep >= currentSpread.positions.length) return false;
+    
+    const pos = currentSpread.positions[currentSpreadStep];
+    
+    // Place card at slot position
+    placeCardAtPosition(card, pos.percentX, pos.percentY);
+    
+    // Mark slot as filled
+    if (spreadSlots[currentSpreadStep]) {
+        spreadSlots[currentSpreadStep].element.classList.add('filled');
+    }
+    
+    // Advance to next step
+    advanceSpreadStep();
+    
+    return true;
+}
+
+function placeCardAtPosition(card, percentX, percentY) {
+    // Check for reversals
+    const willReverse = reversalsEnabled && Math.random() < 0.3;
+    
+    // Create placed card element
+    const placedCard = document.createElement('div');
+    placedCard.className = 'placed-card card';
+    placedCard.dataset.cardId = card.id;
+    placedCard.dataset.percentX = percentX;
+    placedCard.dataset.percentY = percentY;
+    
+    placedCard.innerHTML = `
+        <div class="card-face card-back"></div>
+        <div class="card-face card-front">${getCardFrontContent(card)}</div>
+        <div class="dev-label">${card.id}</div>
+    `;
+    
+    if (willReverse) {
+        placedCard.dataset.reversed = 'true';
+        placedCard.classList.add('will-reverse');
+    }
+    
+    placedCard.style.left = percentX + '%';
+    placedCard.style.top = percentY + '%';
+    
+    readingSurfaceContent.appendChild(placedCard);
+    
+    // Store reference
+    placedCards.push({ element: placedCard, card: card });
+    
+    // Setup interactions
+    addPlacedCardHandlers(placedCard, card);
+    
+    // Hide "Drag cards here" text and dock the deck
+    readingSurface.classList.add('has-cards');
+    document.querySelector('.deck-area').classList.add('docked');
+    
+    // Update spread slots filled state
+    updateSpreadSlotsFilled();
+    
+    triggerHaptic('medium');
+    saveCurrentReading();
 }
 
 // DOM elements
@@ -4331,9 +4579,22 @@ function selectSpread(spreadId) {
     renderSpreadSlots();
     closeSpreadPanel();
     saveCurrentReading();
+    
+    // Start mobile spread guided mode
+    if (isMobileView()) {
+        // Small delay to let slots render
+        setTimeout(() => {
+            startMobileSpreadMode();
+        }, 100);
+    }
 }
 
 function clearSpread() {
+    // End mobile spread mode if active
+    if (mobileSpreadMode) {
+        endMobileSpreadMode();
+    }
+    
     currentSpread = null;
     clearSpreadSlots();
     hideSpreadReference();
