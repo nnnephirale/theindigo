@@ -617,7 +617,7 @@
             left: 50%;
             top: 50%;
             cursor: pointer;
-            transition: transform 0.15s ease, z-index 0s;
+            transition: transform 0.15s ease;
             /* Base transform uses custom properties set by JS */
             --lift: 0px;
             --scale: 1;
@@ -626,11 +626,16 @@
                        translateY(calc(var(--y, 0px) + var(--lift))) 
                        rotate(var(--rot, 0deg))
                        scale(var(--scale));
+            -webkit-tap-highlight-color: transparent;
         }
-        /* Focused card state (replaces hover/active) */
+        /* Pressing state - subtle feedback during long-press */
+        .card-picker-card.pressing {
+            --scale: 0.95;
+            transition: transform 0.1s ease;
+        }
+        /* Focused card state - no z-index change, only transforms */
         .card-picker-card.focused {
-            z-index: 100 !important;
-            --lift: -15px;
+            --lift: -20px;
             --scale: 1.15;
         }
         .card-picker-card-back {
@@ -2577,16 +2582,109 @@ function createPickerCard(card, index, cardW) {
     
     el.innerHTML = `<div class="card-picker-card-back"></div>`;
     
-    // Tap to focus or select (if already focused)
-    el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (pickerFocusedIndex === index) {
-            // Already focused - select it
-            confirmPickerSelection();
-        } else {
-            // Focus this card
-            focusPickerCard(index);
+    // Long-press to focus, tap to confirm (if already focused)
+    const LONG_PRESS_DURATION = 300; // ms
+    let pressTimer = null;
+    let pressStartTime = 0;
+    let hasMoved = false;
+    let startX = 0;
+    let startY = 0;
+    
+    function startPress(x, y) {
+        pressStartTime = Date.now();
+        hasMoved = false;
+        startX = x;
+        startY = y;
+        
+        // Add pressing visual feedback
+        el.classList.add('pressing');
+        
+        // Set timer for long-press
+        pressTimer = setTimeout(() => {
+            if (!hasMoved) {
+                el.classList.remove('pressing');
+                if (pickerFocusedIndex === index) {
+                    // Already focused - select it
+                    confirmPickerSelection();
+                } else {
+                    // Focus this card
+                    focusPickerCard(index);
+                }
+            }
+        }, LONG_PRESS_DURATION);
+    }
+    
+    function movePress(x, y) {
+        // If moved more than 10px, cancel the press
+        const dx = Math.abs(x - startX);
+        const dy = Math.abs(y - startY);
+        if (dx > 10 || dy > 10) {
+            hasMoved = true;
+            cancelPress();
         }
+    }
+    
+    function cancelPress() {
+        if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+        }
+        el.classList.remove('pressing');
+    }
+    
+    function endPress() {
+        const pressDuration = Date.now() - pressStartTime;
+        cancelPress();
+        
+        // If it was a short tap and card is already focused, confirm selection
+        if (!hasMoved && pressDuration < LONG_PRESS_DURATION) {
+            if (pickerFocusedIndex === index) {
+                confirmPickerSelection();
+            }
+            // Short tap on unfocused card does nothing - must long-press to focus
+        }
+    }
+    
+    // Touch events
+    el.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+        const touch = e.touches[0];
+        startPress(touch.clientX, touch.clientY);
+    }, { passive: true });
+    
+    el.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        movePress(touch.clientX, touch.clientY);
+    }, { passive: true });
+    
+    el.addEventListener('touchend', (e) => {
+        e.stopPropagation();
+        endPress();
+    });
+    
+    el.addEventListener('touchcancel', () => {
+        cancelPress();
+    });
+    
+    // Mouse events (for desktop testing)
+    el.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        startPress(e.clientX, e.clientY);
+    });
+    
+    el.addEventListener('mousemove', (e) => {
+        if (pressTimer) {
+            movePress(e.clientX, e.clientY);
+        }
+    });
+    
+    el.addEventListener('mouseup', (e) => {
+        e.stopPropagation();
+        endPress();
+    });
+    
+    el.addEventListener('mouseleave', () => {
+        cancelPress();
     });
     
     return el;
