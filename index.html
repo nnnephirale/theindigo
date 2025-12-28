@@ -68,7 +68,7 @@
         h1 { font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em; }
         .header-left { display: flex; align-items: center; gap: 1rem; }
         .controls { display: flex; gap: 0.5rem; align-items: center; }
-        
+
         /* Mobile Menu - hidden by default */
         .menu-btn {
             display: none;
@@ -79,7 +79,7 @@
             color: hsl(var(--foreground));
         }
         .menu-btn .icon { width: 1.25rem; height: 1.25rem; }
-        
+
         .mobile-menu {
             display: none;
             position: absolute;
@@ -95,7 +95,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         .mobile-menu.open { display: flex; }
-        
+
         .mobile-menu-item {
             display: flex;
             align-items: center;
@@ -114,7 +114,7 @@
         .mobile-menu-item:active { background: hsl(var(--accent)); }
         .mobile-menu-item .icon { width: 1.125rem; height: 1.125rem; flex-shrink: 0; }
         .mobile-menu-item.active { background: hsl(var(--primary) / 0.1); color: hsl(var(--primary)); }
-        
+
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
             font-size: 0.8125rem; font-weight: 500; font-family: inherit;
@@ -208,7 +208,7 @@
             justify-content: center;
             gap: 0.5rem;
         }
-        
+
         /* Surface Tools (Aa, Zoom) */
         .surface-tools {
             position: absolute; top: 0.5rem; right: 0.5rem; z-index: 100;
@@ -221,11 +221,11 @@
         .text-tool-btn.active { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border-color: hsl(var(--primary)); }
         .text-tool-label { font-size: 0.8125rem; }
         .zoom-btn .icon { width: 0.875rem; height: 0.875rem; }
-        
+
         /* Text Mode Cursors */
         .reading-surface.text-mode { cursor: text; }
         .reading-surface.text-mode-drawing { cursor: crosshair; }
-        
+
         /* Text Box */
         .text-box {
             position: absolute; z-index: 55;
@@ -260,13 +260,13 @@
             overflow: hidden;
         }
         .text-box-content::placeholder { color: hsl(var(--muted-foreground) / 0.4); }
-        
+
         /* Drag Zone - padding area around textarea */
         .text-box { padding: 8px; cursor: move; }
         .text-box-content { cursor: text; }
         .text-box.dragging { opacity: 0.8; cursor: grabbing; }
         .text-box.dragging * { cursor: grabbing; }
-        
+
         /* Resize Handles */
         .text-box-handle {
             position: absolute; width: 8px; height: 8px;
@@ -285,7 +285,7 @@
         .text-box-handle.s { bottom: -4px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
         .text-box-handle.sw { bottom: -4px; left: -4px; cursor: sw-resize; }
         .text-box-handle.w { top: 50%; left: -4px; transform: translateY(-50%); cursor: w-resize; }
-        
+
         /* Text Box Controls (font size) */
         .text-box-controls {
             position: absolute; right: 100%; top: 0; margin-right: 0.5rem;
@@ -403,7 +403,7 @@
             .menu-btn { display: flex; }
             .header-left h1 { display: none; }
             .header-left .toggle-group { display: none; }
-            
+
             /* Mobile header buttons - larger, icon only */
             header {
                 padding: 0.75rem 1rem;
@@ -426,13 +426,13 @@
             .controls .btn span {
                 display: none;
             }
-            
+
             /* Hide desktop deck controls on mobile */
             .deck-controls { display: none; }
-            
+
             /* Hide instructions on mobile */
             .instructions { display: none; }
-            
+
             /* Mobile deck always in docked appearance */
             .deck-container { 
                 height: 200px;
@@ -449,13 +449,13 @@
                 transform: translateY(calc(100% - 130px));
                 clip-path: none;
             }
-            
+
             /* Reading surface fills available space */
             .reading-surface {
                 flex: 1;
                 min-height: 0;
             }
-            
+
             /* Ensure main takes remaining space */
             main {
                 flex: 1;
@@ -476,7 +476,7 @@
         .deck-container:not(.dragging-active) .card:hover:not(.dragging) {
             transform: translate(-50%, calc(-50% - 15px)) translateX(var(--base-x, 0px)) translateY(var(--base-y, 0px)) rotate(var(--base-rot, 0deg)) scale(1.05) !important;
         }
-        
+
         /* Mobile Card Picker Modal */
         .card-picker-modal {
             position: fixed;
@@ -513,7 +513,7 @@
         .card-picker-content.dismissing {
             animation: slideDown 0.2s ease-out forwards;
         }
-        
+
         @keyframes slideUp {
             from { transform: translateY(100%); }
             to { transform: translateY(0); }
@@ -522,7 +522,7 @@
             from { transform: translateY(0); }
             to { transform: translateY(100%); }
         }
-        
+
         /* Notch drag handle */
         .card-picker-notch-area {
             display: flex;
@@ -541,7 +541,7 @@
             background: hsl(var(--muted-foreground) / 0.3);
             border-radius: 3px;
         }
-        
+
         .card-picker-cards {
             flex: 1;
             overflow-y: auto;
@@ -564,7 +564,7 @@
         .card-picker-row:nth-child(1) { animation-delay: 0.05s; }
         .card-picker-row:nth-child(2) { animation-delay: 0.15s; }
         .card-picker-row:nth-child(3) { animation-delay: 0.25s; }
-        
+
         @keyframes rowFadeIn {
             from {
                 opacity: 0;
@@ -575,7 +575,7 @@
                 transform: translateY(0);
             }
         }
-        
+
         .card-picker-card {
             position: absolute;
             left: 50%;
@@ -592,9 +592,9 @@
                        scale(var(--scale));
         }
         .card-picker-card:hover,
-        .card-picker-card:active,
-        .card-picker-card.touch-active {
+        .card-picker-card:active {
             z-index: 100 !important;
+            transform: translate(-50%, -50%) translateY(-15px) scale(1.15) !important;
             --lift: -15px;
             --scale: 1.15;
         }
@@ -610,7 +610,7 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             border: 1px solid hsl(var(--border));
         }
-        
+
         /* Card ready to place - staged above deck */
         .deck-container .card.card-staged {
             transform: translate(-50%, calc(-50% - 60px)) translateX(0px) scale(1.15) !important;
@@ -622,7 +622,7 @@
             0%, 100% { transform: translate(-50%, calc(-50% - 60px)) translateX(0px) scale(1.15); }
             50% { transform: translate(-50%, calc(-50% - 66px)) translateX(0px) scale(1.17); }
         }
-        
+
         .card.dragging {
             transition: none !important;
             z-index: 10000 !important;
@@ -757,7 +757,7 @@
         .validation-status.invalid { background: hsl(0 84% 60% / 0.1); color: hsl(0 84% 50%); }
         .instructions { text-align: center; font-size: 0.75rem; color: hsl(var(--muted-foreground) / 0.7); pointer-events: none; padding: 0.5rem 0; }
         .icon { width: 1rem; height: 1rem; }
-        
+
         /* Save Modal */
         .save-modal {
             position: fixed; inset: 0; background: hsl(var(--background) / 0.8);
@@ -792,7 +792,7 @@
         #saveNewBtn { display: none; }
         .save-modal.has-existing #saveNewBtn { display: inline-flex; }
         .save-modal.has-existing #saveConfirmBtn::after { content: ' (Overwrite)'; }
-        
+
         /* History Panel */
         .history-overlay {
             position: fixed; inset: 0; background: hsl(var(--background) / 0.5);
@@ -849,7 +849,7 @@
         }
         .btn-danger { color: hsl(0 84% 50%); }
         .btn-danger:hover { background: hsl(0 84% 50% / 0.1); }
-        
+
         /* Toast */
         .toast {
             position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(1rem);
@@ -859,7 +859,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-        
+
         /* Spread Panel */
         .spread-overlay {
             position: fixed; inset: 0; background: hsl(var(--background) / 0.5);
@@ -895,7 +895,7 @@
         .spread-item-preview { display: flex; gap: 0.25rem; margin-top: 0.5rem; justify-content: center; }
         .spread-preview-slot { width: 16px; height: 24px; border: 1px solid hsl(var(--border)); border-radius: 2px; background: hsl(var(--muted) / 0.3); }
         .spread-panel-footer { padding: 0.75rem 1.25rem; border-top: 1px solid hsl(var(--border)); }
-        
+
         /* Spread Slots on Reading Surface */
         .spread-slot {
             position: absolute; transform: translate(-50%, -50%);
@@ -932,7 +932,7 @@
             border-color: transparent;
             box-shadow: none;
         }
-        
+
         /* Spread Reference Panel */
         .spread-reference {
             position: absolute; top: 0.5rem; left: 0.5rem;
@@ -1012,7 +1012,7 @@
                     </svg>
                 </button>
             </div>
-            
+
             <!-- Mobile Menu Dropdown -->
             <div class="mobile-menu" id="mobileMenu">
                 <button class="mobile-menu-item" id="mobileShuffleBtn">
@@ -1142,7 +1142,7 @@
         <div class="dev-info" id="devInfo"></div>
         <div class="validation-status" id="validationStatus"></div>
     </div>
-    
+
     <!-- Save Modal -->
     <div class="save-modal" id="saveModal">
         <div class="save-modal-content">
@@ -1160,7 +1160,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- History Panel -->
     <div class="history-panel" id="historyPanel">
         <div class="history-header">
@@ -1182,7 +1182,7 @@
         </div>
     </div>
     <div class="history-overlay" id="historyOverlay"></div>
-    
+
     <!-- Spread Panel -->
     <div class="spread-panel" id="spreadPanel">
         <div class="spread-panel-header">
@@ -1201,7 +1201,7 @@
         </div>
     </div>
     <div class="spread-overlay" id="spreadOverlay"></div>
-    
+
 </body>
 <script>
 // ============================================
@@ -1211,15 +1211,15 @@ const USE_IMAGES = true;
 
 function getCardImageUrl(card) {
     const baseUrl = 'https://steve-p.org/cards/small/sm_RWSa-';
-    
+
     if (card.arcana === 'Major') {
         // Major Arcana: T-00 to T-21
         return `${baseUrl}T-${card.number.toString().padStart(2, '0')}.webp`;
     }
-    
+
     // Minor Arcana suit codes
     const suitCode = { Wands: 'W', Cups: 'C', Swords: 'S', Pentacles: 'P' }[card.suit];
-    
+
     // Number/court mapping
     let numCode;
     if (card.number === 1) {
@@ -1235,7 +1235,7 @@ function getCardImageUrl(card) {
     } else if (card.number === 14) {
         numCode = 'KI'; // King
     }
-    
+
     return `${baseUrl}${suitCode}-${numCode}.webp`;
 }
 
@@ -1800,9 +1800,9 @@ function saveCurrentReading() {
         localStorage.removeItem(STORAGE_KEYS.CURRENT_READING);
         return;
     }
-    
+
     const surfaceRect = readingSurface.getBoundingClientRect();
-    
+
     const reading = {
         id: currentReadingId || generateReadingId(),
         timestamp: Date.now(),
@@ -1834,7 +1834,7 @@ function saveCurrentReading() {
         }),
         deckOrder: deck.map(c => c.id)
     };
-    
+
     currentReadingId = reading.id;
     localStorage.setItem(STORAGE_KEYS.CURRENT_READING, JSON.stringify(reading));
 }
@@ -1863,7 +1863,7 @@ function restoreReading(reading) {
     textBoxes = [];
     textBoxIdCounter = 0;
     currentReadingId = reading.id;
-    
+
     // Restore spread
     if (reading.spreadId && SPREADS[reading.spreadId]) {
         currentSpread = SPREADS[reading.spreadId];
@@ -1871,12 +1871,12 @@ function restoreReading(reading) {
         currentSpread = null;
     }
     clearSpreadSlots();
-    
+
     // Restore deck order
     if (reading.deckOrder) {
         deck = reading.deckOrder.map(id => TAROT_DECK.find(c => c.id === id)).filter(Boolean);
     }
-    
+
     // Restore placed cards
     if (reading.cards) {
         reading.cards.forEach(savedCard => {
@@ -1884,7 +1884,7 @@ function restoreReading(reading) {
             if (cardData) {
                 // Remove from deck if present
                 deck = deck.filter(c => c.id !== savedCard.cardId);
-                
+
                 // Create and place card
                 const el = document.createElement('div');
                 el.className = 'placed-card card';
@@ -1896,29 +1896,29 @@ function restoreReading(reading) {
                 el.dataset.percentX = savedCard.percentX;
                 el.dataset.percentY = savedCard.percentY;
                 el.style.animation = 'none'; // Skip grow animation on restore
-                
+
                 el.innerHTML = `
                     <div class="card-face card-back"></div>
                     <div class="card-face card-front">${getCardFrontContent(cardData)}</div>
                     <div class="dev-label">${cardData.id}</div>
                 `;
-                
+
                 // Add event handlers
                 addPlacedCardHandlers(el, cardData);
-                
+
                 readingSurfaceContent.appendChild(el);
                 placedCards.push({ card: cardData, element: el });
             }
         });
     }
-    
+
     // Restore text boxes
     if (reading.textBoxes && reading.textBoxes.length > 0) {
         reading.textBoxes.forEach(savedBox => {
             restoreTextBox(savedBox);
         });
     }
-    
+
     if (placedCards.length > 0) {
         readingSurface.classList.add('has-cards');
         document.querySelector('.deck-area').classList.add('docked');
@@ -1926,12 +1926,12 @@ function restoreReading(reading) {
         readingSurface.classList.remove('has-cards');
         document.querySelector('.deck-area').classList.remove('docked');
     }
-    
+
     // Render spread slots after cards are placed
     if (currentSpread) {
         renderSpreadSlots();
     }
-    
+
     renderDeck();
     updateDevPanel();
 }
@@ -1942,9 +1942,9 @@ function generateReadingId() {
 
 function saveToHistory(title = '') {
     if (placedCards.length === 0 && textBoxes.length === 0) return null;
-    
+
     const surfaceRect = readingSurface.getBoundingClientRect();
-    
+
     const reading = {
         id: currentReadingId || generateReadingId(),
         title: title || `Reading - ${new Date().toLocaleDateString()}`,
@@ -1977,10 +1977,10 @@ function saveToHistory(title = '') {
         }),
         deckOrder: deck.map(c => c.id)
     };
-    
+
     try {
         let history = JSON.parse(localStorage.getItem(STORAGE_KEYS.READING_HISTORY)) || [];
-        
+
         // Update existing or add new
         const existingIndex = history.findIndex(r => r.id === reading.id);
         if (existingIndex >= 0) {
@@ -1988,10 +1988,10 @@ function saveToHistory(title = '') {
         } else {
             history.unshift(reading);
         }
-        
+
         // Keep only last 50 readings
         history = history.slice(0, 50);
-        
+
         localStorage.setItem(STORAGE_KEYS.READING_HISTORY, JSON.stringify(history));
         return reading.id;
     } catch (e) {
@@ -2090,17 +2090,17 @@ function isMobileView() {
 // Helper: Calculate and apply card positions in deck layout
 function applyDeckLayout(cards, cardW, overlap, onCard) {
     const total = cards.length;
-    
+
     if (isMobileView()) {
         // Mobile: Single arc showing 26 cards (subset of deck)
         const visibleCount = Math.min(26, total);
         const arcHeight = 20;
         const maxRotation = 15;
         const mobileOverlap = Math.min(overlap * 1.1, cardW * 0.6);
-        
+
         const totalW = cardW + (visibleCount - 1) * mobileOverlap;
         const startX = -totalW / 2 + cardW / 2;
-        
+
         // Show first 26 cards (evenly distributed from deck if desired, or just first 26)
         for (let i = 0; i < visibleCount && i < total; i++) {
             const card = cards[i];
@@ -2115,7 +2115,7 @@ function applyDeckLayout(cards, cardW, overlap, onCard) {
         // Single row (desktop)
         const totalW = cardW + (total - 1) * overlap;
         const startX = -totalW / 2 + cardW / 2;
-        
+
         cards.forEach((card, i) => {
             const xPos = startX + i * overlap;
             onCard(card, i, { xPos, arcY: 0, rotation: 0, top: '50%' });
@@ -2126,7 +2126,7 @@ function applyDeckLayout(cards, cardW, overlap, onCard) {
 function renderDeck() {
     deckContainer.innerHTML = '';
     const { cardW, overlap } = getCardDimensions();
-    
+
     applyDeckLayout(deck, cardW, overlap, (card, index, pos) => {
         const el = createCardElement(card, index);
         el.style.left = '50%';
@@ -2169,7 +2169,7 @@ function triggerHaptic(style = 'light') {
         window.webkit.messageHandlers.haptic.postMessage(style);
         return;
     }
-    
+
     // Fallback to Vibration API (Android, some browsers)
     if (navigator.vibrate) {
         switch(style) {
@@ -2186,7 +2186,7 @@ let cardPickerModal = null;
 
 function createCardPickerModal() {
     if (cardPickerModal) return cardPickerModal;
-    
+
     cardPickerModal = document.createElement('div');
     cardPickerModal.className = 'card-picker-modal';
     cardPickerModal.innerHTML = `
@@ -2199,48 +2199,45 @@ function createCardPickerModal() {
         </div>
     `;
     document.body.appendChild(cardPickerModal);
-    
+
     // Close on overlay click
     cardPickerModal.querySelector('.card-picker-overlay').addEventListener('click', closeCardPickerModal);
-    
+
     // Setup notch drag to dismiss
     setupNotchDragToDismiss(cardPickerModal);
-    
-    // Setup touch tracking for card selection (enables left-to-right swiping)
-    setupPickerTouchTracking(cardPickerModal);
-    
+
     return cardPickerModal;
 }
 
 function setupNotchDragToDismiss(modal) {
     const notchArea = modal.querySelector('.card-picker-notch-area');
     const content = modal.querySelector('.card-picker-content');
-    
+
     let startY = 0;
     let currentY = 0;
     let isDragging = false;
-    
+
     notchArea.addEventListener('touchstart', (e) => {
         isDragging = true;
         startY = e.touches[0].clientY;
         currentY = 0;
         content.classList.add('dragging');
     }, { passive: true });
-    
+
     notchArea.addEventListener('touchmove', (e) => {
         if (!isDragging) return;
-        
+
         const deltaY = e.touches[0].clientY - startY;
         // Only allow dragging down (positive deltaY)
         currentY = Math.max(0, deltaY);
         content.style.transform = `translateY(${currentY}px)`;
     }, { passive: true });
-    
+
     notchArea.addEventListener('touchend', () => {
         if (!isDragging) return;
         isDragging = false;
         content.classList.remove('dragging');
-        
+
         // If dragged more than 100px down, dismiss
         if (currentY > 100) {
             content.classList.add('dismissing');
@@ -2256,85 +2253,10 @@ function setupNotchDragToDismiss(modal) {
     });
 }
 
-function setupPickerTouchTracking(modal) {
-    const cardsContainer = modal.querySelector('.card-picker-cards');
-    let currentTouchCard = null;
-    let touchMoved = false;
-    
-    // Helper to clear all touch-active states
-    function clearAllTouchActive() {
-        modal.querySelectorAll('.card-picker-card.touch-active').forEach(card => {
-            card.classList.remove('touch-active');
-        });
-    }
-    
-    cardsContainer.addEventListener('touchstart', (e) => {
-        touchMoved = false;
-        clearAllTouchActive(); // Ensure clean state
-        const touch = e.touches[0];
-        const card = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.card-picker-card');
-        if (card) {
-            currentTouchCard = card;
-            card.classList.add('touch-active');
-        }
-    }, { passive: true });
-    
-    cardsContainer.addEventListener('touchmove', (e) => {
-        const touch = e.touches[0];
-        
-        // Clear current card's active state and pointer events before detection
-        clearAllTouchActive();
-        if (currentTouchCard) {
-            currentTouchCard.style.pointerEvents = 'none';
-        }
-        
-        const card = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.card-picker-card');
-        
-        // Restore pointer events
-        if (currentTouchCard) {
-            currentTouchCard.style.pointerEvents = '';
-        }
-        
-        if (card) {
-            card.classList.add('touch-active');
-            if (card !== currentTouchCard) {
-                touchMoved = true;
-                triggerHaptic('light');
-                currentTouchCard = card;
-            }
-        } else {
-            currentTouchCard = null;
-        }
-    }, { passive: true });
-    
-    cardsContainer.addEventListener('touchend', (e) => {
-        clearAllTouchActive();
-        if (currentTouchCard) {
-            // Only handle selection here if user swiped between cards
-            // Simple taps will be handled by the click event
-            if (touchMoved) {
-                e.preventDefault();
-                const cardId = currentTouchCard.dataset.cardId;
-                const index = parseInt(currentTouchCard.dataset.index);
-                const card = deck.find(c => c.id === cardId);
-                if (card) {
-                    selectCardFromPicker(card, index);
-                }
-            }
-            currentTouchCard = null;
-        }
-    });
-    
-    cardsContainer.addEventListener('touchcancel', () => {
-        clearAllTouchActive();
-        currentTouchCard = null;
-    }, { passive: true });
-}
-
 function openCardPickerModal() {
     const modal = createCardPickerModal();
     renderPickerCards();
-    
+
     modal.classList.add('open');
     triggerHaptic('light');
 }
@@ -2342,13 +2264,13 @@ function openCardPickerModal() {
 function renderPickerCards() {
     const modal = cardPickerModal;
     if (!modal) return;
-    
+
     const cardsContainer = modal.querySelector('.card-picker-cards');
     cardsContainer.innerHTML = '';
-    
+
     // Get card dimensions (same as dock)
     const { cardW, overlap } = getCardDimensions();
-    
+
     // Split deck into 3 rows (26 cards max per row)
     const cardsPerRow = 26;
     const rows = [
@@ -2356,42 +2278,44 @@ function renderPickerCards() {
         deck.slice(cardsPerRow, cardsPerRow * 2),
         deck.slice(cardsPerRow * 2)
     ].filter(row => row.length > 0); // Remove empty rows
-    
+
     // Arc settings matching the dock exactly
     const arcHeight = 20;
     const maxRotation = 15;
     const mobileOverlap = Math.min(overlap * 1.1, cardW * 0.6);
-    
+
     rows.forEach((rowCards, rowIndex) => {
         const rowEl = document.createElement('div');
         rowEl.className = 'card-picker-row';
         // Set row height to accommodate arc + card height
         rowEl.style.height = (cardW * 1.6 + arcHeight + 10) + 'px';
-        
+
         // Calculate positioning based on THIS row's card count
         const rowCount = rowCards.length;
         const totalW = cardW + (rowCount - 1) * mobileOverlap;
         const startX = -totalW / 2 + cardW / 2;
-        
+
         rowCards.forEach((card, i) => {
             const cardEl = createPickerCard(card, i, cardW);
-            
+
             // Calculate position for this row's cards
             const xPos = startX + i * mobileOverlap;
             const progress = rowCount > 1 ? i / (rowCount - 1) : 0.5;
             const arcY = -Math.sin(progress * Math.PI) * arcHeight;
             const rotation = (progress - 0.5) * maxRotation * 2;
-            
+
+            // Apply transform like dock does
+            cardEl.style.transform = `translate(-50%, -50%) translateX(${xPos}px) translateY(${arcY}px) rotate(${rotation}deg)`;
             // Set CSS custom properties (transform is composed in CSS)
             cardEl.style.setProperty('--x', `${xPos}px`);
             cardEl.style.setProperty('--y', `${arcY}px`);
             cardEl.style.setProperty('--rot', `${rotation}deg`);
             // Rightmost card on top (higher index = higher z-index)
             cardEl.style.zIndex = i;
-            
+
             rowEl.appendChild(cardEl);
         });
-        
+
         cardsContainer.appendChild(rowEl);
     });
 }
@@ -2401,24 +2325,24 @@ function createPickerCard(card, index, cardW) {
     el.className = 'card-picker-card';
     el.dataset.cardId = card.id;
     el.dataset.index = index;
-    
+
     // Set size explicitly (same as dock cards)
     el.style.width = cardW + 'px';
     el.style.height = (cardW * 1.6) + 'px';
-    
+
     el.innerHTML = `<div class="card-picker-card-back"></div>`;
-    
+
     el.addEventListener('click', () => {
         selectCardFromPicker(card, index);
     });
-    
+
     return el;
 }
 
 function selectCardFromPicker(card, index) {
     triggerHaptic('medium');
     closeCardPickerModal();
-    
+
     // Create a staged card element (don't rely on it being in the visible deck)
     const selectedEl = document.createElement('div');
     selectedEl.className = 'card card-staged';
@@ -2429,26 +2353,26 @@ function selectCardFromPicker(card, index) {
         <div class="card-face card-front">${getCardFrontContent(card)}</div>
         <div class="dev-label">${card.id}</div>
     `;
-    
+
     // Position it in the center of the deck container
     selectedEl.style.left = '50%';
     selectedEl.style.top = '30%';
     selectedEl.style.transform = 'translate(-50%, -50%)';
     selectedEl.style.zIndex = '200';
-    
+
     // Add to deck container
     deckContainer.appendChild(selectedEl);
-    
+
     // Store reference
     stagedCard = selectedEl;
     stagedCard.dataset.deckIndex = index;
-    
+
     // Dim other cards
     const deckCards = deckContainer.querySelectorAll('.card:not(.card-staged)');
     deckCards.forEach(el => {
         el.style.opacity = '0.4';
     });
-    
+
     // Add touch handler for dragging
     selectedEl.addEventListener('touchstart', handleDeckTouchStart, { passive: false });
     selectedEl.addEventListener('mousedown', startDrag);
@@ -2471,13 +2395,13 @@ function handleDeckTouchStart(e) {
         e.preventDefault();
         return;
     }
-    
+
     // On desktop-sized screens, use normal drag
     if (!isMobileView()) {
         startDrag(e);
         return;
     }
-    
+
     // On mobile, tap opens the card picker modal
     e.preventDefault();
     openCardPickerModal();
@@ -2485,17 +2409,17 @@ function handleDeckTouchStart(e) {
 
 function cancelStagedCard() {
     if (!stagedCard) return;
-    
+
     // Remove the staged card element from DOM (it was dynamically created)
     stagedCard.remove();
     stagedCard = null;
-    
+
     // Restore opacity of all deck cards
     const cards = deckContainer.querySelectorAll('.card');
     cards.forEach(card => {
         card.style.opacity = '';
     });
-    
+
     // Re-render deck to ensure clean state
     renderDeck();
 }
@@ -2503,7 +2427,7 @@ function cancelStagedCard() {
 // Tap on deck area (not on a card) to cancel staged card
 document.querySelector('.deck-area').addEventListener('touchstart', e => {
     if (!stagedCard) return;
-    
+
     // If tapping directly on the deck area (not on a card), cancel
     if (!e.target.closest('.card')) {
         e.preventDefault();
@@ -2519,22 +2443,22 @@ function startDrag(e) {
     if (!el) return;
 
     draggedCard = el;
-    
+
     // Get current visual position before changing anything
     const rect = el.getBoundingClientRect();
-    
+
     // Add dragging classes to disable hover effects and keep deck visible
     draggedCard.classList.add('dragging');
     deckContainer.classList.add('dragging-active');
     deckContainer.closest('.deck-area').classList.add('dragging-active');
-    
+
     // Store original styles to calculate position
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    
+
     // Move card to body to escape clip-path on deck-container
     document.body.appendChild(draggedCard);
-    
+
     // Apply fixed positioning
     draggedCard.style.position = 'fixed';
     draggedCard.style.left = centerX + 'px';
@@ -2567,7 +2491,7 @@ function endDrag(e) {
     const cx = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
     const cy = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
     const surfaceRect = readingSurface.getBoundingClientRect();
-    
+
     const droppedOnSurface = cx >= surfaceRect.left && cx <= surfaceRect.right && 
                              cy >= surfaceRect.top && cy <= surfaceRect.bottom;
 
@@ -2582,11 +2506,11 @@ function endDrag(e) {
             // Calculate position relative to the content (accounting for zoom/pan)
             // The content is transformed with translate(panX, panY) scale(currentZoom)
             const contentRect = readingSurfaceContent.getBoundingClientRect();
-            
+
             // Get cursor position relative to the transformed content
             const relX = cx - contentRect.left;
             const relY = cy - contentRect.top;
-            
+
             // Convert to unscaled coordinates (the content's internal coordinate system)
             // Since content uses transform-origin: center, and we're placing with percentages,
             // we need the position relative to the content's actual size
@@ -2619,44 +2543,44 @@ function placeCard(card, x, y) {
     const el = document.createElement('div');
     el.className = 'placed-card card';
     el.dataset.cardId = card.id;
-    
+
     // Store position as percentage for responsive scaling
     // Use the surface dimensions (not content, since content is scaled)
     const surfaceRect = readingSurface.getBoundingClientRect();
     let percentX = (x / surfaceRect.width) * 100;
     let percentY = (y / surfaceRect.height) * 100;
-    
+
     // Check for nearby spread slot and snap to it
     const nearestSlot = findNearestSlot(percentX, percentY);
     if (nearestSlot) {
         percentX = nearestSlot.position.percentX;
         percentY = nearestSlot.position.percentY;
     }
-    
+
     el.style.left = percentX + '%';
     el.style.top = percentY + '%';
     el.dataset.percentX = percentX;
     el.dataset.percentY = percentY;
-    
+
     el.innerHTML = `
         <div class="card-face card-back"></div>
         <div class="card-face card-front">${getCardFrontContent(card)}</div>
         <div class="dev-label">${card.id}</div>
     `;
-    
+
     addPlacedCardHandlers(el, card);
-    
+
     readingSurfaceContent.appendChild(el);
     placedCards.push({ card, element: el });
-    
+
     // Hide "Drag cards here" text and dock the deck after first card
     readingSurface.classList.add('has-cards');
     document.querySelector('.deck-area').classList.add('docked');
-    
+
     // Update spread slots filled state
     updateSpreadSlotsFilled();
     clearSlotHighlights();
-    
+
     // Auto-save
     saveCurrentReading();
 }
@@ -2667,21 +2591,21 @@ function addPlacedCardHandlers(el, card) {
     let hasMoved = false;
     let startX, startY, startLeft, startTop;
     const HOLD_THRESHOLD = 150; // ms - anything longer is considered a drag intent
-    
+
     // Helper to get coordinates from mouse or touch event
     function getEventCoords(e, forEnd = false) {
         if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
         if (forEnd && e.changedTouches?.[0]) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
         return { x: e.clientX, y: e.clientY };
     }
-    
+
     // Shared: Initialize drag state
     function initDrag(coords) {
         mouseDownTime = Date.now();
         hasMoved = false;
         startX = coords.x;
         startY = coords.y;
-        
+
         // Get current position - cards use percentage positioning with transform centering
         const contentRect = readingSurfaceContent.getBoundingClientRect();
         const rect = el.getBoundingClientRect();
@@ -2689,10 +2613,10 @@ function addPlacedCardHandlers(el, card) {
         const cardCenterY = rect.top + rect.height / 2 - contentRect.top;
         startLeft = cardCenterX / currentZoom;
         startTop = cardCenterY / currentZoom;
-        
+
         el.style.zIndex = 100;
     }
-    
+
     // Shared: Handle move during drag
     function handleMove(coords) {
         const elapsed = Date.now() - mouseDownTime;
@@ -2704,17 +2628,17 @@ function addPlacedCardHandlers(el, card) {
             const newTop = startTop + dy;
             el.style.left = newLeft + 'px';
             el.style.top = newTop + 'px';
-            
+
             // Highlight nearest slot during drag
             const surfaceRect = readingSurface.getBoundingClientRect();
             highlightNearestSlot((newLeft / surfaceRect.width) * 100, (newTop / surfaceRect.height) * 100);
         }
     }
-    
+
     // Shared: Handle end of interaction
     function handleEnd(coords) {
         clearSlotHighlights();
-        
+
         if (hasMoved && coords) {
             const deckRect = document.querySelector('.deck-area').getBoundingClientRect();
             if (coords.x >= deckRect.left && coords.x <= deckRect.right && 
@@ -2722,26 +2646,26 @@ function addPlacedCardHandlers(el, card) {
                 returnCardToDeck(card, el);
                 return;
             }
-            
+
             const surfaceRect = readingSurface.getBoundingClientRect();
             let newPercentX = (el.offsetLeft / surfaceRect.width) * 100;
             let newPercentY = (el.offsetTop / surfaceRect.height) * 100;
-            
+
             const nearestSlot = findNearestSlot(newPercentX, newPercentY);
             if (nearestSlot) {
                 newPercentX = nearestSlot.position.percentX;
                 newPercentY = nearestSlot.position.percentY;
             }
-            
+
             el.style.left = newPercentX + '%';
             el.style.top = newPercentY + '%';
             el.dataset.percentX = newPercentX;
             el.dataset.percentY = newPercentY;
-            
+
             updateSpreadSlotsFilled();
             saveCurrentReading();
         }
-        
+
         // Click/tap action if quick and no movement
         const elapsed = Date.now() - mouseDownTime;
         if (elapsed < HOLD_THRESHOLD && !hasMoved) {
@@ -2749,7 +2673,7 @@ function addPlacedCardHandlers(el, card) {
                 const willReverse = reversalsEnabled && Math.random() < 0.5;
                 el.classList.add('flipping');
                 if (willReverse) el.classList.add('will-reverse');
-                
+
                 setTimeout(() => {
                     el.classList.remove('flipping', 'will-reverse');
                     el.classList.add('flipped');
@@ -2769,27 +2693,27 @@ function addPlacedCardHandlers(el, card) {
             }
         }
     }
-    
+
     // Mouse events
     el.addEventListener('mousedown', e => {
         e.preventDefault();
         initDrag(getEventCoords(e));
-        
+
         const onMove = e => handleMove(getEventCoords(e));
         const onUp = e => {
             document.removeEventListener('mousemove', onMove);
             document.removeEventListener('mouseup', onUp);
             handleEnd(getEventCoords(e));
         };
-        
+
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
     });
-    
+
     // Touch events
     el.addEventListener('touchstart', e => {
         initDrag(getEventCoords(e));
-        
+
         const onMove = e => handleMove(getEventCoords(e));
         const onEnd = e => {
             document.removeEventListener('touchmove', onMove);
@@ -2797,7 +2721,7 @@ function addPlacedCardHandlers(el, card) {
             const coords = e.changedTouches?.[0] ? { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY } : null;
             handleEnd(coords);
         };
-        
+
         document.addEventListener('touchmove', onMove);
         document.addEventListener('touchend', onEnd);
     }, { passive: true });
@@ -2807,20 +2731,20 @@ function returnCardToDeck(card, element) {
     // Remove from placed cards
     placedCards = placedCards.filter(p => p.card.id !== card.id);
     element.remove();
-    
+
     // Add back to deck
     deck.push(card);
-    
+
     // Re-render deck to include returned card
     renderDeck();
     updateDevPanel();
-    
+
     // Update spread slots filled state
     updateSpreadSlotsFilled();
-    
+
     // Auto-save (or clear if no cards left)
     saveCurrentReading();
-    
+
     // Show drag text if no cards left
     if (placedCards.length === 0) {
         readingSurface.classList.remove('has-cards');
@@ -2830,14 +2754,14 @@ function returnCardToDeck(card, element) {
 function showCardModal(card, isReversed = false, cardElement = null) {
     const modalCard = document.getElementById('modalCard');
     const modalPositionTitle = document.getElementById('modalPositionTitle');
-    
+
     modalCard.innerHTML = getModalContent(card);
     if (isReversed) {
         modalCard.classList.add('reversed');
     } else {
         modalCard.classList.remove('reversed');
     }
-    
+
     // Find spread position if applicable
     let positionName = null;
     let positionPrompt = null;
@@ -2852,7 +2776,7 @@ function showCardModal(card, isReversed = false, cardElement = null) {
             positionPrompt = matchingPos.prompt;
         }
     }
-    
+
     // Show position title and prompt if found
     if (positionName) {
         let positionHtml = `<span class="position-name">${positionName}</span>`;
@@ -2864,10 +2788,10 @@ function showCardModal(card, isReversed = false, cardElement = null) {
     } else {
         modalPositionTitle.style.display = 'none';
     }
-    
+
     document.getElementById('modalTitle').textContent = card.name + (isReversed ? ' (Reversed)' : '');
     document.getElementById('modalSubtitle').textContent = card.arcana + ' Arcana' + (card.suit ? ' · ' + card.suit : '');
-    
+
     // Populate meanings
     const meanings = TAROT_MEANINGS[card.id];
     if (meanings) {
@@ -2875,18 +2799,18 @@ function showCardModal(card, isReversed = false, cardElement = null) {
         document.getElementById('keywordsReversed').textContent = meanings.keywords.reversed.join(' · ');
         document.getElementById('meaningText').textContent = isReversed ? meanings.reversed : meanings.upright;
         document.getElementById('modalMeanings').style.display = 'block';
-        
+
         // Highlight active orientation
         document.querySelector('.keywords-upright').classList.toggle('active', !isReversed);
         document.querySelector('.keywords-reversed').classList.toggle('active', isReversed);
-        
+
         // Reset meanings toggle state (collapsed by default)
         document.getElementById('meaningsToggle').classList.remove('expanded');
         document.getElementById('meaningsContent').classList.remove('expanded');
     } else {
         document.getElementById('modalMeanings').style.display = 'none';
     }
-    
+
     cardModal.classList.add('active');
 }
 
@@ -2975,15 +2899,15 @@ resetBtn.addEventListener('click', () => {
     readingSurface.classList.remove('has-cards');
     document.querySelector('.deck-area').classList.remove('docked');
     currentReadingId = null;
-    
+
     // Clear spread
     currentSpread = null;
     clearSpreadSlots();
     hideSpreadReference();
-    
+
     // Reset zoom/pan
     resetZoom();
-    
+
     localStorage.removeItem(STORAGE_KEYS.CURRENT_READING);
     initializeDeck();
 });
@@ -3111,7 +3035,7 @@ function toggleTextMode() {
     textModeActive = !textModeActive;
     if (textToolBtn) textToolBtn.classList.toggle('active', textModeActive);
     readingSurface.classList.toggle('text-mode', textModeActive);
-    
+
     if (!textModeActive) {
         // Deselect active text box
         if (activeTextBox) {
@@ -3138,13 +3062,13 @@ function createTextBox(x, y, width = null, height = null, showBorder = false, in
     box.className = 'text-box';
     box.id = `text-box-${id}`;
     box.dataset.textBoxId = id;
-    
+
     // Convert to percentages if not already
     // Use content's actual dimensions (not transformed) for percentage calculation
     const contentRect = readingSurfaceContent.getBoundingClientRect();
     const contentWidth = contentRect.width / currentZoom;
     const contentHeight = contentRect.height / currentZoom;
-    
+
     let percentX, percentY;
     if (usePercent) {
         percentX = x;
@@ -3153,18 +3077,18 @@ function createTextBox(x, y, width = null, height = null, showBorder = false, in
         percentX = (x / contentWidth) * 100;
         percentY = (y / contentHeight) * 100;
     }
-    
+
     box.style.left = percentX + '%';
     box.style.top = percentY + '%';
     box.dataset.percentX = percentX;
     box.dataset.percentY = percentY;
-    
+
     if (width && height) {
         box.style.width = width + 'px';
         box.style.height = height + 'px';
         box.classList.add('show-border');
     }
-    
+
     box.innerHTML = `
         <div class="text-box-border"></div>
         <textarea class="text-box-content" placeholder="Start typing..." spellcheck="false">${initialContent}</textarea>
@@ -3182,23 +3106,23 @@ function createTextBox(x, y, width = null, height = null, showBorder = false, in
         <div class="text-box-handle sw"></div>
         <div class="text-box-handle w"></div>
     `;
-    
+
     const textarea = box.querySelector('.text-box-content');
     const fontBtns = box.querySelectorAll('.text-box-font-btn');
     const handles = box.querySelectorAll('.text-box-handle');
-    
+
     // Auto-resize textarea height
     function autoResizeTextarea() {
         textarea.style.height = 'auto';
         textarea.style.height = textarea.scrollHeight + 'px';
         box.style.height = 'auto';
     }
-    
+
     let fontSize = initialFontSize;
     textarea.style.fontSize = fontSize + 'px';
     const minFontSize = 10;
     const maxFontSize = 24;
-    
+
     // Font size controls
     fontBtns.forEach(btn => {
         btn.addEventListener('mousedown', e => e.stopPropagation());
@@ -3217,12 +3141,12 @@ function createTextBox(x, y, width = null, height = null, showBorder = false, in
             saveCurrentReading();
         });
     });
-    
+
     // Focus/blur handling
     textarea.addEventListener('focus', () => {
         activateTextBox(box);
     });
-    
+
     textarea.addEventListener('blur', e => {
         // Small delay to allow click on controls
         setTimeout(() => {
@@ -3237,22 +3161,22 @@ function createTextBox(x, y, width = null, height = null, showBorder = false, in
             }
         }, 150);
     });
-    
+
     // Save on input
     textarea.addEventListener('input', () => {
         autoResizeTextarea();
         saveCurrentReading();
     });
-    
+
     // Initial auto-resize
     if (initialContent) {
         setTimeout(autoResizeTextarea, 0);
     }
-    
+
     // Drag handling - on the box itself (padding area), not textarea
     let isDraggingBox = false;
     let dragStartX, dragStartY, boxStartPercentX, boxStartPercentY;
-    
+
     box.addEventListener('mousedown', e => {
         // If clicking directly on the box (padding area), start drag
         // If clicking on textarea, controls, or handles, don't drag
@@ -3266,12 +3190,12 @@ function createTextBox(x, y, width = null, height = null, showBorder = false, in
             boxStartPercentY = parseFloat(box.dataset.percentY);
             box.style.zIndex = 70;
             box.classList.add('dragging');
-            
+
             document.addEventListener('mousemove', onDragBox);
             document.addEventListener('mouseup', onDragBoxEnd);
         }
     });
-    
+
     function onDragBox(e) {
         if (!isDraggingBox) return;
         const surfaceRect = readingSurface.getBoundingClientRect();
@@ -3285,7 +3209,7 @@ function createTextBox(x, y, width = null, height = null, showBorder = false, in
         box.dataset.percentX = newPercentX;
         box.dataset.percentY = newPercentY;
     }
-    
+
     function onDragBoxEnd() {
         isDraggingBox = false;
         box.style.zIndex = 55;
@@ -3294,13 +3218,13 @@ function createTextBox(x, y, width = null, height = null, showBorder = false, in
         document.removeEventListener('mouseup', onDragBoxEnd);
         saveCurrentReading();
     }
-    
+
     // Click on textarea focuses it
     textarea.addEventListener('mousedown', e => {
         e.stopPropagation();
         activateTextBox(box);
     });
-    
+
     // Resize handles
     handles.forEach(handle => {
         handle.addEventListener('mousedown', e => {
@@ -3309,24 +3233,24 @@ function createTextBox(x, y, width = null, height = null, showBorder = false, in
             startResize(box, handle, e);
         });
     });
-    
+
     readingSurfaceContent.appendChild(box);
     textBoxes.push({ id, element: box, fontSize });
-    
+
     // Auto-focus only if not restoring
     if (!initialContent) {
         textarea.focus();
         activateTextBox(box);
     }
-    
+
     return box;
 }
 
 function restoreTextBox(savedBox) {
     const surfaceRect = readingSurface.getBoundingClientRect();
-    
+
     let x, y, width, height, usePercent;
-    
+
     if (savedBox.percentX !== undefined) {
         // Use percentages directly
         x = savedBox.percentX;
@@ -3342,7 +3266,7 @@ function restoreTextBox(savedBox) {
         height = savedBox.height;
         usePercent = false;
     }
-    
+
     const box = createTextBox(
         x,
         y,
@@ -3353,16 +3277,16 @@ function restoreTextBox(savedBox) {
         savedBox.fontSize || 13,
         usePercent
     );
-    
+
     if (savedBox.showBorder) {
         box.classList.add('show-border');
     }
-    
+
     // Don't focus restored boxes
     const textarea = box.querySelector('.text-box-content');
     textarea.blur();
     deactivateTextBox(box);
-    
+
     return box;
 }
 
@@ -3395,7 +3319,7 @@ let resizeState = null;
 function startResize(box, handle, e) {
     const rect = box.getBoundingClientRect();
     const surfaceRect = readingSurface.getBoundingClientRect();
-    
+
     resizeState = {
         box,
         handle: handle.className.split(' ').find(c => c !== 'text-box-handle'),
@@ -3408,23 +3332,23 @@ function startResize(box, handle, e) {
         surfaceWidth: surfaceRect.width,
         surfaceHeight: surfaceRect.height
     };
-    
+
     document.addEventListener('mousemove', doResize);
     document.addEventListener('mouseup', endResize);
 }
 
 function doResize(e) {
     if (!resizeState) return;
-    
+
     const { box, handle, startX, startY, startPercentX, startPercentY, startWidth, startHeight, surfaceWidth, surfaceHeight } = resizeState;
     const dx = (e.clientX - startX) / currentZoom;
     const dy = (e.clientY - startY) / currentZoom;
-    
+
     let newPercentX = startPercentX;
     let newPercentY = startPercentY;
     let newWidth = startWidth;
     let newHeight = startHeight;
-    
+
     // Handle horizontal resize
     if (handle.includes('w')) {
         newWidth = Math.max(50, startWidth - dx);
@@ -3432,7 +3356,7 @@ function doResize(e) {
     } else if (handle.includes('e')) {
         newWidth = Math.max(50, startWidth + dx);
     }
-    
+
     // Handle vertical resize
     if (handle.includes('n')) {
         newHeight = Math.max(30, startHeight - dy);
@@ -3440,13 +3364,13 @@ function doResize(e) {
     } else if (handle.includes('s')) {
         newHeight = Math.max(30, startHeight + dy);
     }
-    
+
     box.style.left = newPercentX + '%';
     box.style.top = newPercentY + '%';
     box.dataset.percentX = newPercentX;
     box.dataset.percentY = newPercentY;
     box.style.width = newWidth + 'px';
-    
+
     // Only set fixed height if vertically resizing, otherwise auto-fit to content
     if (handle.includes('n') || handle.includes('s')) {
         box.style.height = newHeight + 'px';
@@ -3492,47 +3416,47 @@ let textDrawState = null;
 
 readingSurface.addEventListener('mousedown', e => {
     if (!textModeActive) return;
-    
+
     // Ignore if clicking on a card, text box, or button
     if (e.target.closest('.placed-card') || 
         e.target.closest('.text-box') || 
         e.target.closest('.text-tool-btn')) {
         return;
     }
-    
+
     // Use content rect to account for zoom/pan transform
     const contentRect = readingSurfaceContent.getBoundingClientRect();
     const x = (e.clientX - contentRect.left) / currentZoom;
     const y = (e.clientY - contentRect.top) / currentZoom;
-    
+
     textDrawState = {
         startX: x,
         startY: y,
         isDragging: false,
         previewBox: null
     };
-    
+
     document.addEventListener('mousemove', onTextDraw);
     document.addEventListener('mouseup', onTextDrawEnd);
 });
 
 function onTextDraw(e) {
     if (!textDrawState) return;
-    
+
     // Use content rect to account for zoom/pan transform
     const contentRect = readingSurfaceContent.getBoundingClientRect();
     const x = (e.clientX - contentRect.left) / currentZoom;
     const y = (e.clientY - contentRect.top) / currentZoom;
-    
+
     const dx = Math.abs(x - textDrawState.startX);
     const dy = Math.abs(y - textDrawState.startY);
-    
+
     // Start dragging if moved more than 5px
     if (dx > 5 || dy > 5) {
         textDrawState.isDragging = true;
         readingSurface.classList.add('text-mode-drawing');
         readingSurface.classList.remove('text-mode');
-        
+
         // Create or update preview box
         if (!textDrawState.previewBox) {
             textDrawState.previewBox = document.createElement('div');
@@ -3542,12 +3466,12 @@ function onTextDraw(e) {
             textDrawState.previewBox.innerHTML = '<div class="text-box-border" style="opacity:1"></div>';
             readingSurfaceContent.appendChild(textDrawState.previewBox);
         }
-        
+
         const left = Math.min(textDrawState.startX, x);
         const top = Math.min(textDrawState.startY, y);
         const width = Math.abs(x - textDrawState.startX);
         const height = Math.abs(y - textDrawState.startY);
-        
+
         textDrawState.previewBox.style.left = left + 'px';
         textDrawState.previewBox.style.top = top + 'px';
         textDrawState.previewBox.style.width = width + 'px';
@@ -3558,35 +3482,35 @@ function onTextDraw(e) {
 function onTextDrawEnd(e) {
     document.removeEventListener('mousemove', onTextDraw);
     document.removeEventListener('mouseup', onTextDrawEnd);
-    
+
     if (!textDrawState) return;
-    
+
     readingSurface.classList.remove('text-mode-drawing');
     readingSurface.classList.add('text-mode');
-    
+
     // Remove preview box
     if (textDrawState.previewBox) {
         textDrawState.previewBox.remove();
     }
-    
+
     if (textDrawState.isDragging) {
         // Create text box with dragged dimensions
         // Use content rect to account for zoom/pan transform
         const contentRect = readingSurfaceContent.getBoundingClientRect();
         const x = (e.clientX - contentRect.left) / currentZoom;
         const y = (e.clientY - contentRect.top) / currentZoom;
-        
+
         const left = Math.min(textDrawState.startX, x);
         const top = Math.min(textDrawState.startY, y);
         const width = Math.max(50, Math.abs(x - textDrawState.startX));
         const height = Math.max(30, Math.abs(y - textDrawState.startY));
-        
+
         createTextBox(left, top, width, height, true);
     } else {
         // Single click - create borderless text box
         createTextBox(textDrawState.startX, textDrawState.startY);
     }
-    
+
     textDrawState = null;
 }
 
@@ -3602,48 +3526,48 @@ readingSurface.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
         // Priority order: close innermost/most recent first
-        
+
         // 1. Card meaning modal (hide via class, don't remove - it's a persistent element)
         const cardModal = document.getElementById('cardModal');
         if (cardModal && cardModal.classList.contains('active')) {
             cardModal.classList.remove('active');
             return;
         }
-        
+
         // 2. Card picker modal (mobile)
         if (cardPickerModal && cardPickerModal.classList.contains('open')) {
             closeCardPickerModal();
             return;
         }
-        
+
         // 3. Save modal
         const saveModal = document.getElementById('saveModal');
         if (saveModal && saveModal.classList.contains('active')) {
             closeSaveModal();
             return;
         }
-        
+
         // 4. Reading history panel (has both panel and overlay)
         const historyPanel = document.getElementById('historyPanel');
         if (historyPanel && historyPanel.classList.contains('active')) {
             closeHistoryPanel();
             return;
         }
-        
+
         // 5. Spread panel (has both panel and overlay)
         const spreadPanel = document.getElementById('spreadPanel');
         if (spreadPanel && spreadPanel.classList.contains('active')) {
             closeSpreadPanel();
             return;
         }
-        
+
         // 6. Mobile menu
         const mobileMenu = document.getElementById('mobileMenu');
         if (mobileMenu && mobileMenu.classList.contains('show')) {
             mobileMenu.classList.remove('show');
             return;
         }
-        
+
         // 7. Text mode (last priority)
         if (textModeActive) {
             exitTextMode();
@@ -3671,7 +3595,7 @@ const readingSurfaceContent = document.getElementById('readingSurfaceContent');
 
 function updateTransform() {
     readingSurfaceContent.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
-    
+
     // Update button states
     zoomInBtn.disabled = currentZoom >= MAX_ZOOM;
     zoomOutBtn.disabled = currentZoom <= MIN_ZOOM;
@@ -3680,23 +3604,23 @@ function updateTransform() {
 function setZoom(level, centerX = null, centerY = null) {
     const oldZoom = currentZoom;
     currentZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, level));
-    
+
     // If center point provided, adjust pan to zoom toward that point
     if (centerX !== null && centerY !== null) {
         const surfaceRect = readingSurface.getBoundingClientRect();
         const contentCenterX = surfaceRect.width / 2;
         const contentCenterY = surfaceRect.height / 2;
-        
+
         // Calculate the point relative to content center
         const pointX = centerX - contentCenterX - panX;
         const pointY = centerY - contentCenterY - panY;
-        
+
         // Scale the pan offset
         const zoomRatio = currentZoom / oldZoom;
         panX = panX - pointX * (zoomRatio - 1);
         panY = panY - pointY * (zoomRatio - 1);
     }
-    
+
     updateTransform();
 }
 
@@ -3732,7 +3656,7 @@ readingSurface.addEventListener('wheel', e => {
         const rect = readingSurface.getBoundingClientRect();
         const cursorX = e.clientX - rect.left;
         const cursorY = e.clientY - rect.top;
-        
+
         if (e.deltaY < 0) {
             zoomIn(cursorX, cursorY);
         } else {
@@ -3796,7 +3720,7 @@ document.addEventListener('mouseup', e => {
 // Arrow keys to pan
 document.addEventListener('keydown', e => {
     if (e.target.matches('input, textarea')) return;
-    
+
     const panAmount = 30;
     switch (e.key) {
         case 'ArrowUp':
@@ -3835,60 +3759,60 @@ document.addEventListener('keydown', e => {
 readingSurface.addEventListener('touchstart', e => {
     // Only handle if there's a staged card waiting to be placed
     if (!stagedCard) return;
-    
+
     // Ignore if touching a placed card or text box
     if (e.target.closest('.placed-card') || e.target.closest('.text-box')) {
         return;
     }
-    
+
     e.preventDefault();
     const touch = e.touches[0];
-    
+
     // Get position relative to reading surface content (accounting for zoom/pan)
     const surfaceRect = readingSurfaceContent.getBoundingClientRect();
     const x = (touch.clientX - surfaceRect.left) / currentZoom;
     const y = (touch.clientY - surfaceRect.top) / currentZoom;
-    
+
     // Convert to percentages
     const percentX = (x / readingSurfaceContent.offsetWidth) * 100;
     const percentY = (y / readingSurfaceContent.offsetHeight) * 100;
-    
+
     // Place the staged card
     placeStagedCard(percentX, percentY);
 }, { passive: false });
 
 function placeStagedCard(percentX, percentY) {
     if (!stagedCard) return;
-    
+
     // Get the card data
     const cardId = stagedCard.dataset.cardId;
     const cardIndex = parseInt(stagedCard.dataset.index);
     const card = deck.find(c => c.id === cardId);
-    
+
     if (!card) {
         cancelStagedCard();
         return;
     }
-    
+
     triggerHaptic('medium');
-    
+
     // Remove from deck
     deck.splice(cardIndex, 1);
-    
+
     // Clean up staged card element
     stagedCard.classList.remove('card-staged');
     stagedCard.remove();
     stagedCard = null;
-    
+
     // Restore opacity of remaining deck cards
     const cards = deckContainer.querySelectorAll('.card');
     cards.forEach(card => {
         card.style.opacity = '';
     });
-    
+
     // Check for reversals
     const willReverse = reversalsEnabled && Math.random() < 0.3;
-    
+
     // Create placed card
     const placedCard = document.createElement('div');
     placedCard.className = 'placed-card';
@@ -3901,7 +3825,7 @@ function placeStagedCard(percentX, percentY) {
     `;
     placedCard.style.left = percentX + '%';
     placedCard.style.top = percentY + '%';
-    
+
     // Find nearest slot if there's a spread active
     const nearestSlot = findNearestSlot(percentX, percentY);
     if (nearestSlot) {
@@ -3910,13 +3834,13 @@ function placeStagedCard(percentX, percentY) {
         placedCard.dataset.percentX = nearestSlot.percentX;
         placedCard.dataset.percentY = nearestSlot.percentY;
     }
-    
+
     readingSurfaceContent.appendChild(placedCard);
     placedCards.push({ card, element: placedCard, isReversed: willReverse });
-    
+
     // Add handlers for the placed card
     addPlacedCardHandlers(placedCard, card, willReverse);
-    
+
     // Update UI
     readingSurface.classList.add('has-cards');
     updateSpreadSlotsFilled();
@@ -4019,7 +3943,7 @@ function renderSpreadList() {
             '<div class="spread-preview-slot"></div>'
         ).join('');
         const moreCount = spread.positions.length > 5 ? `+${spread.positions.length - 5}` : '';
-        
+
         return `
             <div class="spread-item ${isActive ? 'active' : ''}" data-spread-id="${spread.id}">
                 <div class="spread-item-header">
@@ -4036,7 +3960,7 @@ function renderSpreadList() {
 function selectSpread(spreadId) {
     const spread = SPREADS[spreadId];
     if (!spread) return;
-    
+
     currentSpread = spread;
     renderSpreadSlots();
     closeSpreadPanel();
@@ -4057,7 +3981,7 @@ function renderSpreadSlots() {
         hideSpreadReference();
         return;
     }
-    
+
     // Get placed card dimensions by creating a temp element
     const tempCard = document.createElement('div');
     tempCard.className = 'placed-card';
@@ -4068,7 +3992,7 @@ function renderSpreadSlots() {
     const cardW = parseFloat(computedStyle.width) || 120;
     const cardH = parseFloat(computedStyle.height) || 192;
     document.body.removeChild(tempCard);
-    
+
     currentSpread.positions.forEach(pos => {
         const slot = document.createElement('div');
         slot.className = 'spread-slot';
@@ -4079,7 +4003,7 @@ function renderSpreadSlots() {
         slot.style.top = pos.percentY + '%';
         slot.style.width = cardW + 'px';
         slot.style.height = cardH + 'px';
-        
+
         // Only show label if name exists
         if (pos.name) {
             const label = document.createElement('span');
@@ -4090,19 +4014,19 @@ function renderSpreadSlots() {
             }
             slot.appendChild(label);
         }
-        
+
         // Check if slot is already filled
         if (isSlotFilledByCard(pos)) {
             slot.classList.add('filled');
         }
-        
+
         readingSurfaceContent.appendChild(slot);
         spreadSlots.push({ position: pos, element: slot });
     });
-    
+
     // Show and render reference panel
     showSpreadReference();
-    
+
     // Auto-zoom to fit spread
     autoZoomToFitSpread();
 }
@@ -4112,15 +4036,15 @@ function autoZoomToFitSpread() {
         resetZoom();
         return;
     }
-    
+
     const positions = currentSpread.positions;
-    
+
     // Get bounds of all positions
     const minX = Math.min(...positions.map(p => p.percentX));
     const maxX = Math.max(...positions.map(p => p.percentX));
     const minY = Math.min(...positions.map(p => p.percentY));
     const maxY = Math.max(...positions.map(p => p.percentY));
-    
+
     // Get card size relative to surface (approximate)
     const surfaceRect = readingSurface.getBoundingClientRect();
     const tempCard = document.createElement('div');
@@ -4132,33 +4056,33 @@ function autoZoomToFitSpread() {
     const cardW = parseFloat(cardStyle.width) || 120;
     const cardH = parseFloat(cardStyle.height) || 192;
     document.body.removeChild(tempCard);
-    
+
     // Card dimensions as percentage of surface
     const cardWPercent = (cardW / surfaceRect.width) * 100;
     const cardHPercent = (cardH / surfaceRect.height) * 100;
-    
+
     // Add padding for cards and labels (half card size + some margin)
     const padX = cardWPercent / 2 + 5;
     const padY = cardHPercent / 2 + 8; // Extra for label above
-    
+
     // Calculate spread bounds including card sizes
     const spreadWidth = (maxX - minX) + cardWPercent + padX * 2;
     const spreadHeight = (maxY - minY) + cardHPercent + padY * 2;
-    
+
     // Calculate zoom to fit
     const zoomX = 100 / spreadWidth;
     const zoomY = 100 / spreadHeight;
     let targetZoom = Math.min(zoomX, zoomY, MAX_ZOOM);
     targetZoom = Math.max(targetZoom, MIN_ZOOM);
-    
+
     // Calculate pan to center the spread
     const spreadCenterX = (minX + maxX) / 2;
     const spreadCenterY = (minY + maxY) / 2;
-    
+
     // Pan offset (in pixels) to center the spread
     const offsetX = (50 - spreadCenterX) * surfaceRect.width / 100 * targetZoom;
     const offsetY = (50 - spreadCenterY) * surfaceRect.height / 100 * targetZoom;
-    
+
     // Apply zoom and pan
     currentZoom = targetZoom;
     panX = offsetX;
@@ -4175,7 +4099,7 @@ const spreadRefClose = document.getElementById('spreadRefClose');
 
 function showSpreadReference() {
     if (!currentSpread) return;
-    
+
     spreadRefTitle.textContent = currentSpread.name;
     spreadReference.classList.add('active');
     renderSpreadReferenceCards();
@@ -4187,28 +4111,28 @@ function hideSpreadReference() {
 
 function renderSpreadReferenceCards() {
     if (!currentSpread) return;
-    
+
     // Calculate bounds of spread positions
     const positions = currentSpread.positions;
     const minX = Math.min(...positions.map(p => p.percentX));
     const maxX = Math.max(...positions.map(p => p.percentX));
     const minY = Math.min(...positions.map(p => p.percentY));
     const maxY = Math.max(...positions.map(p => p.percentY));
-    
+
     // Add padding
     const padX = 15;
     const padY = 10;
     const rangeX = (maxX - minX) + padX * 2;
     const rangeY = (maxY - minY) + padY * 2;
-    
+
     spreadRefContent.innerHTML = positions.map(pos => {
         // Normalize positions to fit in reference panel
         const normX = ((pos.percentX - minX + padX) / rangeX) * 100;
         const normY = ((pos.percentY - minY + padY) / rangeY) * 100;
-        
+
         // Check if filled
         const isFilled = isSlotFilledByCard(pos);
-        
+
         return `<div class="spread-ref-card ${isFilled ? 'filled' : ''}" 
                      style="left: ${normX}%; top: ${normY}%"
                      data-slot-id="${pos.id}"
@@ -4263,37 +4187,37 @@ function updateSpreadSlotsFilled() {
             slot.element.classList.remove('filled');
         }
     });
-    
+
     // Update reference panel
     updateSpreadReference();
 }
 
 function findNearestSlot(percentX, percentY, threshold = 10) {
     if (!currentSpread || spreadSlots.length === 0) return null;
-    
+
     let nearest = null;
     let minDist = threshold;
-    
+
     spreadSlots.forEach(slot => {
         const pos = slot.position;
         const dist = Math.sqrt(
             Math.pow(percentX - pos.percentX, 2) + 
             Math.pow(percentY - pos.percentY, 2)
         );
-        
+
         if (dist < minDist && !isSlotFilledByCard(pos)) {
             minDist = dist;
             nearest = slot;
         }
     });
-    
+
     return nearest;
 }
 
 function highlightNearestSlot(percentX, percentY) {
     // Remove all highlights
     spreadSlots.forEach(s => s.element.classList.remove('highlight'));
-    
+
     const nearest = findNearestSlot(percentX, percentY);
     if (nearest) {
         nearest.element.classList.add('highlight');
@@ -4331,7 +4255,7 @@ window.addEventListener('resize', () => {
 function init() {
     // Load user preferences (theme, reversals, dev mode)
     loadPreferences();
-    
+
     // Check for saved reading to restore
     const savedReading = loadCurrentReading();
     if (savedReading) {
@@ -4355,11 +4279,11 @@ function openSaveModal() {
         alert('No cards or notes to save. Place some cards first!');
         return;
     }
-    
+
     // Check if this reading already exists in history
     const history = getReadingHistory();
     const existingReading = currentReadingId ? history.find(r => r.id === currentReadingId) : null;
-    
+
     if (existingReading) {
         saveModal.classList.add('has-existing');
         saveExistingInfo.classList.add('show');
@@ -4374,7 +4298,7 @@ function openSaveModal() {
         readingTitleInput.value = '';
         readingTitleInput.placeholder = 'Enter a title (optional)';
     }
-    
+
     saveModal.classList.add('active');
     readingTitleInput.focus();
 }
@@ -4387,12 +4311,12 @@ function closeSaveModal() {
 
 function confirmSave(asNew = false) {
     const title = readingTitleInput.value.trim();
-    
+
     if (asNew) {
         // Generate new ID for "Save as New"
         currentReadingId = generateReadingId();
     }
-    
+
     const id = saveToHistory(title);
     if (id) {
         closeSaveModal();
@@ -4424,21 +4348,21 @@ function closeHistoryPanel() {
 
 function renderHistoryList() {
     const history = getReadingHistory();
-    
+
     if (history.length === 0) {
         historyList.innerHTML = '';
         historyEmpty.classList.remove('hidden');
         return;
     }
-    
+
     historyEmpty.classList.add('hidden');
-    
+
     historyList.innerHTML = history.map(reading => {
         const date = new Date(reading.timestamp);
         const dateStr = date.toLocaleDateString();
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const cardCount = reading.cards.length;
-        
+
         // Show mini card previews (up to 5)
         const cardPreviews = reading.cards.slice(0, 5).map(c => {
             const cardData = TAROT_DECK.find(card => card.id === c.cardId);
@@ -4449,9 +4373,9 @@ function renderHistoryList() {
             }
             return `<div class="history-item-card ${reversedClass}">${getDisplayNumber(cardData)}</div>`;
         }).join('');
-        
+
         const moreCards = cardCount > 5 ? `<div class="history-item-card">+${cardCount - 5}</div>` : '';
-        
+
         return `
             <div class="history-item" data-reading-id="${reading.id}">
                 <div class="history-item-title">${reading.title || 'Untitled Reading'}</div>
@@ -4506,7 +4430,7 @@ historyList.addEventListener('click', e => {
         deleteReadingFromHistory(deleteBtn.dataset.deleteId, e);
         return;
     }
-    
+
     const item = e.target.closest('.history-item');
     if (item) {
         loadReadingFromHistory(item.dataset.readingId);
@@ -4521,15 +4445,15 @@ function showToast(message, duration = 2000) {
     // Remove existing toast
     const existing = document.querySelector('.toast');
     if (existing) existing.remove();
-    
+
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = message;
     document.body.appendChild(toast);
-    
+
     // Trigger animation
     requestAnimationFrame(() => toast.classList.add('show'));
-    
+
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
