@@ -450,20 +450,21 @@
                 clip-path: none;
             }
             
-            /* Mobile staged card - position fixed above the deck */
+            /* Mobile staged card - visual styles only, position controlled by JS */
             .card.card-staged {
                 position: fixed;
-                bottom: 160px;
-                left: 50%;
-                top: auto !important;
-                transform: translateX(-50%) scale(1.15) !important;
-                z-index: 1000 !important;
+                z-index: 1000;
                 box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), 0 0 20px rgba(255, 255, 255, 0.1);
+            }
+            .card.card-staged.floating {
                 animation: cardStagedFloatMobile 2s ease-in-out infinite;
             }
+            .card.card-staged.dragging {
+                animation: none;
+            }
             @keyframes cardStagedFloatMobile {
-                0%, 100% { transform: translateX(-50%) scale(1.15); }
-                50% { transform: translateX(-50%) translateY(-8px) scale(1.17); }
+                0%, 100% { transform: translate(-50%, -50%) scale(1.15); }
+                50% { transform: translate(-50%, -50%) translateY(-8px) scale(1.17); }
             }
             
             /* Reading surface fills available space */
@@ -2584,14 +2585,38 @@ function selectCardFromPicker(card, index) {
         <div class="dev-label">${card.id}</div>
     `;
     
-    // On mobile, append to body (position:fixed doesn't work inside transformed containers)
-    // On desktop, append to deck container
     if (isMobileView()) {
+        // Mobile: append to body, position via JS
         document.body.appendChild(selectedEl);
+        
+        // Calculate staged position: centered horizontally, overlapping dock
+        const deckRect = deckContainer.getBoundingClientRect();
+        const cardHeight = selectedEl.offsetHeight || 90; // fallback if not yet rendered
+        
+        // Position: horizontally centered, vertically so bottom of card overlaps top of dock
+        const stagedX = window.innerWidth / 2;
+        const stagedY = deckRect.top - (cardHeight * 0.3); // 30% overlap with deck
+        
+        // Store staged position for return-to-staged behavior
+        selectedEl.stagedX = stagedX;
+        selectedEl.stagedY = stagedY;
+        
+        // Apply position and transform
+        selectedEl.style.left = stagedX + 'px';
+        selectedEl.style.top = stagedY + 'px';
+        selectedEl.style.transform = 'translate(-50%, -50%) scale(1.15)';
+        
+        // Add floating animation class
+        selectedEl.classList.add('floating');
+        
+        // Add dedicated touch handler for staged card drag
+        selectedEl.addEventListener('touchstart', handleStagedCardTouch, { passive: false });
     } else {
+        // Desktop: append to deck container
         selectedEl.style.left = '50%';
         selectedEl.style.top = '50%';
         deckContainer.appendChild(selectedEl);
+        selectedEl.addEventListener('mousedown', startDrag);
     }
     
     // Store reference
@@ -2600,10 +2625,6 @@ function selectCardFromPicker(card, index) {
     
     // Store the card data for when it's placed
     stagedCard.cardData = card;
-    
-    // Add touch handler for dragging
-    selectedEl.addEventListener('touchstart', handleDeckTouchStart, { passive: false });
-    selectedEl.addEventListener('mousedown', startDrag);
     
     updateDevPanel();
 }
@@ -2614,14 +2635,97 @@ function closeCardPickerModal() {
     }
 }
 
+// Mobile staged card touch handling - dedicated handler for clean drag behavior
+function handleStagedCardTouch(e) {
+    if (!stagedCard) return;
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const rect = stagedCard.getBoundingClientRect();
+    
+    // Calculate offset from touch point to card center
+    const cardCenterX = rect.left + rect.width / 2;
+    const cardCenterY = rect.top + rect.height / 2;
+    const offsetX = touch.clientX - cardCenterX;
+    const offsetY = touch.clientY - cardCenterY;
+    
+    // Switch from floating to dragging state
+    stagedCard.classList.remove('floating');
+    stagedCard.classList.add('dragging');
+    
+    // Keep scale during drag
+    stagedCard.style.transform = 'translate(-50%, -50%) scale(1.15)';
+    
+    function onTouchMove(e) {
+        if (!stagedCard) return;
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        // Move card to follow finger, accounting for initial offset
+        const newX = touch.clientX - offsetX;
+        const newY = touch.clientY - offsetY;
+        
+        stagedCard.style.left = newX + 'px';
+        stagedCard.style.top = newY + 'px';
+    }
+    
+    function onTouchEnd(e) {
+        if (!stagedCard) return;
+        
+        const touch = e.changedTouches[0];
+        const surfaceRect = readingSurface.getBoundingClientRect();
+        
+        // Check if released over reading surface
+        const releasedOnSurface = 
+            touch.clientX >= surfaceRect.left && 
+            touch.clientX <= surfaceRect.right &&
+            touch.clientY >= surfaceRect.top && 
+            touch.clientY <= surfaceRect.bottom;
+        
+        if (releasedOnSurface) {
+            // Place the card
+            const contentRect = readingSurfaceContent.getBoundingClientRect();
+            const x = (touch.clientX - contentRect.left) / currentZoom;
+            const y = (touch.clientY - contentRect.top) / currentZoom;
+            
+            // Convert to percentages
+            const percentX = (x / (contentRect.width / currentZoom)) * 100;
+            const percentY = (y / (contentRect.height / currentZoom)) * 100;
+            
+            placeStagedCard(percentX, percentY);
+        } else {
+            // Return to staged position
+            returnToStagedPosition();
+        }
+        
+        // Clean up listeners
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+    }
+    
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd);
+}
+
+function returnToStagedPosition() {
+    if (!stagedCard) return;
+    
+    // Return to stored staged position
+    stagedCard.style.left = stagedCard.stagedX + 'px';
+    stagedCard.style.top = stagedCard.stagedY + 'px';
+    stagedCard.style.transform = 'translate(-50%, -50%) scale(1.15)';
+    
+    // Switch back to floating state
+    stagedCard.classList.remove('dragging');
+    stagedCard.classList.add('floating');
+    
+    triggerHaptic('light');
+}
+
 function handleDeckTouchStart(e) {
     // If there's already a staged card on mobile, ignore taps on deck cards
+    // (staged card has its own handler: handleStagedCardTouch)
     if (stagedCard && isMobileView()) {
-        // Only allow tapping the staged card itself to drag it
-        if (e.target.closest('.card-staged')) {
-            startDrag(e);
-        }
-        // Otherwise do nothing - ignore taps on deck cards
         e.preventDefault();
         return;
     }
@@ -4033,10 +4137,9 @@ readingSurface.addEventListener('touchstart', e => {
 function placeStagedCard(percentX, percentY) {
     if (!stagedCard) return;
     
-    // Get the card data
+    // Get the card data (stored on the element for picker-selected cards)
     const cardId = stagedCard.dataset.cardId;
-    const cardIndex = parseInt(stagedCard.dataset.index);
-    const card = deck.find(c => c.id === cardId);
+    const card = stagedCard.cardData;
     
     if (!card) {
         cancelStagedCard();
@@ -4045,18 +4148,17 @@ function placeStagedCard(percentX, percentY) {
     
     triggerHaptic('medium');
     
-    // Remove from deck
-    deck.splice(cardIndex, 1);
+    // Card already removed from deck in selectCardFromPicker, no need to remove again
     
     // Clean up staged card element
     stagedCard.classList.remove('card-staged');
     stagedCard.remove();
     stagedCard = null;
     
-    // Restore opacity of remaining deck cards
+    // Restore opacity of remaining deck cards (in case any were dimmed)
     const cards = deckContainer.querySelectorAll('.card');
-    cards.forEach(card => {
-        card.style.opacity = '';
+    cards.forEach(c => {
+        c.style.opacity = '';
     });
     
     // Check for reversals
