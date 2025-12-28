@@ -564,18 +564,18 @@
             overflow-y: auto;
             overflow-x: hidden;
             padding: 1rem 0;
+            padding-top: calc(50% - 150px); /* Center content vertically (approx) */
             display: flex;
             flex-direction: column;
-            justify-content: center;
             gap: 0.5rem;
             touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
-            transition: padding-bottom 0.25s ease-out;
+            transition: padding 0.25s ease-out;
         }
-        /* When nav is visible, add bottom padding and align to start */
+        /* When nav is visible, reduce top padding and add bottom padding */
         .card-picker-modal.nav-visible .card-picker-cards {
-            justify-content: flex-start;
+            padding-top: 1rem;
             padding-bottom: 70px;
         }
         .card-picker-row {
