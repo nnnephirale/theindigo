@@ -498,7 +498,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 55vh;
+            height: 65vh;
             background: hsl(var(--card));
             border-radius: 1rem 1rem 0 0;
             display: flex;
@@ -591,8 +591,8 @@
                        rotate(var(--rot, 0deg))
                        scale(var(--scale));
         }
-        .card-picker-card:hover,
-        .card-picker-card:active {
+        /* Focused card state (replaces hover/active) */
+        .card-picker-card.focused {
             z-index: 100 !important;
             --lift: -15px;
             --scale: 1.15;
@@ -608,6 +608,56 @@
             border-radius: 3px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             border: 1px solid hsl(var(--border));
+        }
+        
+        /* Card picker navigation */
+        .card-picker-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-top: 1px solid hsl(var(--border));
+            background: hsl(var(--card));
+        }
+        .card-picker-nav-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 1px solid hsl(var(--border));
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-size: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, opacity 0.15s;
+        }
+        .card-picker-nav-btn:active {
+            background: hsl(var(--accent));
+        }
+        .card-picker-nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .card-picker-select-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            border: none;
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .card-picker-select-btn:active {
+            opacity: 0.8;
+        }
+        .card-picker-select-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
         }
         
         /* Card ready to place - staged above deck */
@@ -2195,6 +2245,19 @@ function createCardPickerModal() {
                 <div class="card-picker-notch"></div>
             </div>
             <div class="card-picker-cards"></div>
+            <div class="card-picker-nav">
+                <button class="card-picker-nav-btn" id="pickerPrevBtn" disabled>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                </button>
+                <button class="card-picker-select-btn" id="pickerSelectBtn" disabled>Select Card</button>
+                <button class="card-picker-nav-btn" id="pickerNextBtn" disabled>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     `;
     document.body.appendChild(cardPickerModal);
@@ -2204,6 +2267,9 @@ function createCardPickerModal() {
     
     // Setup notch drag to dismiss
     setupNotchDragToDismiss(cardPickerModal);
+    
+    // Setup navigation buttons
+    setupPickerNavigation(cardPickerModal);
     
     return cardPickerModal;
 }
@@ -2260,12 +2326,21 @@ function openCardPickerModal() {
     triggerHaptic('light');
 }
 
+// Card picker focus state
+let pickerFocusedIndex = -1; // -1 = no card focused
+let pickerAllCards = []; // Flat array of all cards in picker
+
 function renderPickerCards() {
     const modal = cardPickerModal;
     if (!modal) return;
     
     const cardsContainer = modal.querySelector('.card-picker-cards');
     cardsContainer.innerHTML = '';
+    
+    // Reset focus state
+    pickerFocusedIndex = -1;
+    pickerAllCards = [];
+    updatePickerNavButtons();
     
     // Get card dimensions (same as dock)
     const { cardW, overlap } = getCardDimensions();
@@ -2283,6 +2358,8 @@ function renderPickerCards() {
     const maxRotation = 15;
     const mobileOverlap = Math.min(overlap * 1.1, cardW * 0.6);
     
+    let globalIndex = 0;
+    
     rows.forEach((rowCards, rowIndex) => {
         const rowEl = document.createElement('div');
         rowEl.className = 'card-picker-row';
@@ -2295,7 +2372,7 @@ function renderPickerCards() {
         const startX = -totalW / 2 + cardW / 2;
         
         rowCards.forEach((card, i) => {
-            const cardEl = createPickerCard(card, i, cardW);
+            const cardEl = createPickerCard(card, globalIndex, cardW);
             
             // Calculate position for this row's cards
             const xPos = startX + i * mobileOverlap;
@@ -2310,7 +2387,11 @@ function renderPickerCards() {
             // Rightmost card on top (higher index = higher z-index)
             cardEl.style.zIndex = i;
             
+            // Store reference for navigation
+            pickerAllCards.push({ element: cardEl, card: card, globalIndex: globalIndex });
+            
             rowEl.appendChild(cardEl);
+            globalIndex++;
         });
         
         cardsContainer.appendChild(rowEl);
@@ -2321,7 +2402,7 @@ function createPickerCard(card, index, cardW) {
     const el = document.createElement('div');
     el.className = 'card-picker-card';
     el.dataset.cardId = card.id;
-    el.dataset.index = index;
+    el.dataset.globalIndex = index;
     
     // Set size explicitly (same as dock cards)
     el.style.width = cardW + 'px';
@@ -2329,11 +2410,77 @@ function createPickerCard(card, index, cardW) {
     
     el.innerHTML = `<div class="card-picker-card-back"></div>`;
     
+    // Tap to focus this card
     el.addEventListener('click', () => {
-        selectCardFromPicker(card, index);
+        focusPickerCard(index);
     });
     
     return el;
+}
+
+function focusPickerCard(index) {
+    // Remove focus from previous card
+    if (pickerFocusedIndex >= 0 && pickerAllCards[pickerFocusedIndex]) {
+        pickerAllCards[pickerFocusedIndex].element.classList.remove('focused');
+    }
+    
+    // Set new focus
+    pickerFocusedIndex = index;
+    
+    if (index >= 0 && pickerAllCards[index]) {
+        pickerAllCards[index].element.classList.add('focused');
+        triggerHaptic('light');
+        
+        // Scroll the focused card into view if needed
+        const cardEl = pickerAllCards[index].element;
+        const row = cardEl.closest('.card-picker-row');
+        if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+    
+    updatePickerNavButtons();
+}
+
+function updatePickerNavButtons() {
+    const prevBtn = cardPickerModal?.querySelector('#pickerPrevBtn');
+    const nextBtn = cardPickerModal?.querySelector('#pickerNextBtn');
+    const selectBtn = cardPickerModal?.querySelector('#pickerSelectBtn');
+    
+    if (!prevBtn || !nextBtn || !selectBtn) return;
+    
+    const hasFocus = pickerFocusedIndex >= 0;
+    const canGoPrev = hasFocus && pickerFocusedIndex > 0;
+    const canGoNext = hasFocus && pickerFocusedIndex < pickerAllCards.length - 1;
+    
+    prevBtn.disabled = !canGoPrev;
+    nextBtn.disabled = !canGoNext;
+    selectBtn.disabled = !hasFocus;
+}
+
+function setupPickerNavigation(modal) {
+    const prevBtn = modal.querySelector('#pickerPrevBtn');
+    const nextBtn = modal.querySelector('#pickerNextBtn');
+    const selectBtn = modal.querySelector('#pickerSelectBtn');
+    
+    prevBtn.addEventListener('click', () => {
+        if (pickerFocusedIndex > 0) {
+            focusPickerCard(pickerFocusedIndex - 1);
+        }
+    });
+    
+    nextBtn.addEventListener('click', () => {
+        if (pickerFocusedIndex < pickerAllCards.length - 1) {
+            focusPickerCard(pickerFocusedIndex + 1);
+        }
+    });
+    
+    selectBtn.addEventListener('click', () => {
+        if (pickerFocusedIndex >= 0 && pickerAllCards[pickerFocusedIndex]) {
+            const { card } = pickerAllCards[pickerFocusedIndex];
+            selectCardFromPicker(card, pickerFocusedIndex);
+        }
+    });
 }
 
 function selectCardFromPicker(card, index) {
