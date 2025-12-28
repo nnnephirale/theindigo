@@ -1085,29 +1085,65 @@
             border: 1px solid hsl(var(--border)); border-radius: var(--radius);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 100; overflow: hidden;
-            display: none; resize: both;
+            display: none;
+            transition: width 0.2s ease-out, height 0.2s ease-out;
+        }
+        .spread-reference:not(.minimized) {
+            resize: both;
         }
         .spread-reference.active { display: block; }
+        .spread-reference.dragging {
+            transition: none;
+            user-select: none;
+        }
         .spread-reference-header {
             display: flex; align-items: center; justify-content: space-between;
             padding: 0.375rem 0.5rem; background: hsl(var(--muted) / 0.5);
             border-bottom: 1px solid hsl(var(--border));
             cursor: move;
+            gap: 0.5rem;
+        }
+        .spread-reference-notch {
+            width: 32px; height: 4px;
+            background: hsl(var(--muted-foreground) / 0.4);
+            border-radius: 2px;
+            flex-shrink: 0;
         }
         .spread-reference-title {
             font-size: 0.625rem; font-weight: 600; color: hsl(var(--foreground));
             text-transform: uppercase; letter-spacing: 0.025em;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .spread-reference-close {
             width: 1rem; height: 1rem; border-radius: 50%;
             background: hsl(var(--muted)); border: none; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             color: hsl(var(--muted-foreground)); font-size: 0.625rem; line-height: 1;
+            flex-shrink: 0;
         }
         .spread-reference-close:hover { background: hsl(var(--destructive) / 0.2); color: hsl(var(--destructive)); }
         .spread-reference-content {
             padding: 0.5rem; aspect-ratio: 1; position: relative;
             background: hsl(var(--background)); min-height: 100px;
+            transition: height 0.2s ease-out, padding 0.2s ease-out, opacity 0.15s ease-out;
+        }
+        .spread-reference.minimized .spread-reference-content {
+            height: 0 !important;
+            min-height: 0;
+            padding: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .spread-reference.minimized {
+            width: auto !important;
+            height: auto !important;
+            resize: none;
+        }
+        .spread-reference.minimized .spread-reference-header {
+            border-bottom: none;
         }
         .spread-ref-card {
             position: absolute; transform: translate(-50%, -50%);
@@ -1119,6 +1155,12 @@
         .spread-ref-card.filled {
             background: hsl(var(--primary)); color: hsl(var(--primary-foreground));
             border-color: hsl(var(--primary));
+        }
+        
+        @media (max-width: 600px) {
+            .spread-reference {
+                z-index: 150; /* Above dock on mobile */
+            }
         }
     </style>
 </head>
@@ -1208,6 +1250,7 @@
                 </div>
                 <div class="spread-reference" id="spreadReference">
                     <div class="spread-reference-header" id="spreadRefHeader">
+                        <div class="spread-reference-notch"></div>
                         <span class="spread-reference-title" id="spreadRefTitle">Spread</span>
                         <button class="spread-reference-close" id="spreadRefClose">×</button>
                     </div>
@@ -4282,6 +4325,9 @@ const SPREADS = {
         description: 'A simple one-card draw for quick insight or daily guidance.',
         positions: [
             { id: 1, name: '', percentX: 50, percentY: 45, prompt: 'The central message or energy for your question' }
+        ],
+        mobilePositions: [
+            { id: 1, name: '', percentX: 50, percentY: 45, prompt: 'The central message or energy for your question' }
         ]
     },
     threeCard: {
@@ -4292,6 +4338,11 @@ const SPREADS = {
             { id: 1, name: 'Past', percentX: 35, percentY: 45, prompt: 'Past influences and foundations that led to this moment' },
             { id: 2, name: 'Present', percentX: 50, percentY: 45, prompt: 'Current situation, energies, and challenges' },
             { id: 3, name: 'Future', percentX: 65, percentY: 45, prompt: 'Likely outcome if current path continues' }
+        ],
+        mobilePositions: [
+            { id: 1, name: 'Past', percentX: 15, percentY: 45, prompt: 'Past influences and foundations that led to this moment' },
+            { id: 2, name: 'Present', percentX: 50, percentY: 45, prompt: 'Current situation, energies, and challenges' },
+            { id: 3, name: 'Future', percentX: 85, percentY: 45, prompt: 'Likely outcome if current path continues' }
         ]
     },
     spirit: {
@@ -4303,6 +4354,13 @@ const SPREADS = {
             { id: 2, name: 'Air', percentX: 65, percentY: 45, prompt: 'Mental aspects: communication, thoughts, intellect' },
             { id: 3, name: 'Fire', percentX: 50, percentY: 75, prompt: 'Passion and will: strength, drive, power to change' },
             { id: 4, name: 'Water', percentX: 35, percentY: 45, prompt: 'Emotional aspects: feelings, intuition, relationships' },
+            { id: 5, name: 'Spirit', percentX: 50, percentY: 45, prompt: 'Archetypal overview: the soul of the matter, future trajectory' }
+        ],
+        mobilePositions: [
+            { id: 1, name: 'Earth', percentX: 50, percentY: 15, prompt: 'Physical and material aspects: health, wealth, property' },
+            { id: 2, name: 'Air', percentX: 85, percentY: 45, prompt: 'Mental aspects: communication, thoughts, intellect' },
+            { id: 3, name: 'Fire', percentX: 50, percentY: 75, prompt: 'Passion and will: strength, drive, power to change' },
+            { id: 4, name: 'Water', percentX: 15, percentY: 45, prompt: 'Emotional aspects: feelings, intuition, relationships' },
             { id: 5, name: 'Spirit', percentX: 50, percentY: 45, prompt: 'Archetypal overview: the soul of the matter, future trajectory' }
         ]
     },
@@ -4322,9 +4380,28 @@ const SPREADS = {
             { id: 5, name: 'Feelings', percentX: 70, percentY: 80, prompt: 'Emotional aspects and feelings involved' },
             { id: 8, name: 'Persona', percentX: 50, percentY: 95, prompt: 'How you present yourself or are perceived' },
             { id: 7, name: 'World', percentX: 50, percentY: 125, prompt: 'Material world and practical manifestation' }
+        ],
+        mobilePositions: [
+            { id: 10, name: 'Spirit', percentX: 50, percentY: 5, prompt: 'The divine or higher purpose guiding the situation' },
+            { id: 2, name: 'Form', percentX: 10, percentY: 20, prompt: 'The structure or form the issue takes' },
+            { id: 1, name: 'Force', percentX: 90, percentY: 20, prompt: 'The generative, active energy behind the issue' },
+            { id: 11, name: 'Da\'at', percentX: 50, percentY: 35, prompt: 'Hidden knowledge bridging understanding' },
+            { id: 4, name: 'Against', percentX: 10, percentY: 50, prompt: 'Forces or factors working against you' },
+            { id: 3, name: 'For', percentX: 90, percentY: 50, prompt: 'Forces or factors working in your favor' },
+            { id: 9, name: 'Advice', percentX: 50, percentY: 65, prompt: 'Guidance or recommended action' },
+            { id: 6, name: 'Thoughts', percentX: 10, percentY: 80, prompt: 'Mental aspects and thought patterns' },
+            { id: 5, name: 'Feelings', percentX: 90, percentY: 80, prompt: 'Emotional aspects and feelings involved' },
+            { id: 8, name: 'Persona', percentX: 50, percentY: 95, prompt: 'How you present yourself or are perceived' },
+            { id: 7, name: 'World', percentX: 50, percentY: 125, prompt: 'Material world and practical manifestation' }
         ]
     }
 };
+
+// Helper: Get positions array based on viewport (mobile vs desktop)
+function getSpreadPositions(spread) {
+    if (!spread) return [];
+    return (isMobileView() && spread.mobilePositions) ? spread.mobilePositions : spread.positions;
+}
 
 // Spread state
 let currentSpread = null;
@@ -4386,7 +4463,8 @@ function createSpreadStepIndicator() {
 function updateMobileSpreadStep() {
     if (!mobileSpreadMode || !currentSpread) return;
     
-    const totalSteps = currentSpread.positions.length;
+    const positions = getSpreadPositions(currentSpread);
+    const totalSteps = positions.length;
     
     // Check if spread is complete
     if (currentSpreadStep >= totalSteps) {
@@ -4406,7 +4484,7 @@ function updateMobileSpreadStep() {
     });
     
     // Update step indicator
-    const currentPos = currentSpread.positions[currentSpreadStep];
+    const currentPos = positions[currentSpreadStep];
     const slotData = spreadSlots[currentSpreadStep];
     
     if (spreadStepIndicator && slotData) {
@@ -4425,7 +4503,8 @@ function updateMobileSpreadStep() {
 function panToSpreadSlot(stepIndex) {
     if (!spreadSlots[stepIndex]) return;
     
-    const pos = currentSpread.positions[stepIndex];
+    const positions = getSpreadPositions(currentSpread);
+    const pos = positions[stepIndex];
     const surfaceRect = readingSurface.getBoundingClientRect();
     const contentRect = readingSurfaceContent.getBoundingClientRect();
     
@@ -4469,9 +4548,10 @@ function advanceSpreadStep() {
 }
 
 function placeCardInActiveSlot(card) {
-    if (!mobileSpreadMode || currentSpreadStep >= currentSpread.positions.length) return false;
+    const positions = getSpreadPositions(currentSpread);
+    if (!mobileSpreadMode || currentSpreadStep >= positions.length) return false;
     
-    const pos = currentSpread.positions[currentSpreadStep];
+    const pos = positions[currentSpreadStep];
     
     // Place card at slot position
     placeCardAtPosition(card, pos.percentX, pos.percentY);
@@ -4620,7 +4700,8 @@ function renderSpreadSlots() {
     const cardH = parseFloat(computedStyle.height) || 192;
     document.body.removeChild(tempCard);
     
-    currentSpread.positions.forEach(pos => {
+    const positions = getSpreadPositions(currentSpread);
+    positions.forEach(pos => {
         const slot = document.createElement('div');
         slot.className = 'spread-slot';
         slot.dataset.slotId = pos.id;
@@ -4664,7 +4745,7 @@ function autoZoomToFitSpread() {
         return;
     }
     
-    const positions = currentSpread.positions;
+    const positions = getSpreadPositions(currentSpread);
     
     // Get bounds of all positions
     const minX = Math.min(...positions.map(p => p.percentX));
@@ -4729,17 +4810,23 @@ function showSpreadReference() {
     
     spreadRefTitle.textContent = currentSpread.name;
     spreadReference.classList.add('active');
+    spreadReference.classList.remove('minimized');
     renderSpreadReferenceCards();
 }
 
 function hideSpreadReference() {
     spreadReference.classList.remove('active');
+    spreadReference.classList.remove('minimized');
+}
+
+function toggleSpreadReferenceMinimize() {
+    spreadReference.classList.toggle('minimized');
 }
 
 function renderSpreadReferenceCards() {
     if (!currentSpread) return;
     
-    // Calculate bounds of spread positions
+    // Use desktop positions for the reference preview (consistent view)
     const positions = currentSpread.positions;
     const minX = Math.min(...positions.map(p => p.percentX));
     const maxX = Math.max(...positions.map(p => p.percentX));
@@ -4752,13 +4839,17 @@ function renderSpreadReferenceCards() {
     const rangeX = (maxX - minX) + padX * 2;
     const rangeY = (maxY - minY) + padY * 2;
     
-    spreadRefContent.innerHTML = positions.map(pos => {
+    // Get mobile positions for filled state checking
+    const mobilePositions = getSpreadPositions(currentSpread);
+    
+    spreadRefContent.innerHTML = positions.map((pos, index) => {
         // Normalize positions to fit in reference panel
         const normX = ((pos.percentX - minX + padX) / rangeX) * 100;
         const normY = ((pos.percentY - minY + padY) / rangeY) * 100;
         
-        // Check if filled
-        const isFilled = isSlotFilledByCard(pos);
+        // Check if filled using the appropriate positions for current view
+        const checkPos = mobilePositions[index] || pos;
+        const isFilled = isSlotFilledByCard(checkPos);
         
         return `<div class="spread-ref-card ${isFilled ? 'filled' : ''}" 
                      style="left: ${normX}%; top: ${normY}%"
@@ -4772,30 +4863,88 @@ function updateSpreadReference() {
     renderSpreadReferenceCards();
 }
 
-// Make reference panel draggable
+// Make reference panel draggable (mouse and touch)
 let isRefDragging = false;
 let refDragStartX, refDragStartY, refStartLeft, refStartTop;
+let refDragMoved = false;
 
-spreadRefHeader.addEventListener('mousedown', e => {
-    if (e.target === spreadRefClose) return;
+function startRefDrag(clientX, clientY) {
     isRefDragging = true;
-    refDragStartX = e.clientX;
-    refDragStartY = e.clientY;
+    refDragMoved = false;
+    refDragStartX = clientX;
+    refDragStartY = clientY;
     refStartLeft = spreadReference.offsetLeft;
     refStartTop = spreadReference.offsetTop;
+    spreadReference.classList.add('dragging');
+}
+
+function moveRefDrag(clientX, clientY) {
+    if (!isRefDragging) return;
+    const dx = clientX - refDragStartX;
+    const dy = clientY - refDragStartY;
+    
+    // Only consider it a drag if moved more than 5px
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        refDragMoved = true;
+    }
+    
+    // Constrain to reading surface bounds
+    const surfaceRect = readingSurface.getBoundingClientRect();
+    const panelRect = spreadReference.getBoundingClientRect();
+    
+    let newLeft = refStartLeft + dx;
+    let newTop = refStartTop + dy;
+    
+    // Keep panel within surface
+    newLeft = Math.max(0, Math.min(newLeft, surfaceRect.width - panelRect.width));
+    newTop = Math.max(0, Math.min(newTop, surfaceRect.height - panelRect.height));
+    
+    spreadReference.style.left = newLeft + 'px';
+    spreadReference.style.top = newTop + 'px';
+}
+
+function endRefDrag() {
+    if (!isRefDragging) return;
+    isRefDragging = false;
+    spreadReference.classList.remove('dragging');
+    
+    // If didn't drag (just clicked), toggle minimize
+    if (!refDragMoved) {
+        toggleSpreadReferenceMinimize();
+    }
+}
+
+// Mouse drag events
+spreadRefHeader.addEventListener('mousedown', e => {
+    if (e.target === spreadRefClose) return;
+    startRefDrag(e.clientX, e.clientY);
     e.preventDefault();
 });
 
 document.addEventListener('mousemove', e => {
-    if (!isRefDragging) return;
-    const dx = e.clientX - refDragStartX;
-    const dy = e.clientY - refDragStartY;
-    spreadReference.style.left = (refStartLeft + dx) + 'px';
-    spreadReference.style.top = (refStartTop + dy) + 'px';
+    moveRefDrag(e.clientX, e.clientY);
 });
 
 document.addEventListener('mouseup', () => {
-    isRefDragging = false;
+    endRefDrag();
+});
+
+// Touch drag events
+spreadRefHeader.addEventListener('touchstart', e => {
+    if (e.target === spreadRefClose) return;
+    const touch = e.touches[0];
+    startRefDrag(touch.clientX, touch.clientY);
+    e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('touchmove', e => {
+    if (!isRefDragging) return;
+    const touch = e.touches[0];
+    moveRefDrag(touch.clientX, touch.clientY);
+}, { passive: true });
+
+document.addEventListener('touchend', () => {
+    endRefDrag();
 });
 
 spreadRefClose.addEventListener('click', hideSpreadReference);
