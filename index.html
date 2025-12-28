@@ -450,6 +450,22 @@
                 clip-path: none;
             }
             
+            /* Mobile staged card - position fixed above the deck */
+            .card.card-staged {
+                position: fixed;
+                bottom: 160px;
+                left: 50%;
+                top: auto !important;
+                transform: translateX(-50%) scale(1.15) !important;
+                z-index: 1000 !important;
+                box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), 0 0 20px rgba(255, 255, 255, 0.1);
+                animation: cardStagedFloatMobile 2s ease-in-out infinite;
+            }
+            @keyframes cardStagedFloatMobile {
+                0%, 100% { transform: translateX(-50%) scale(1.15); }
+                50% { transform: translateX(-50%) translateY(-8px) scale(1.17); }
+            }
+            
             /* Reading surface fills available space */
             .reading-surface {
                 flex: 1;
@@ -498,7 +514,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 65vh;
+            height: 70vh;
             background: hsl(var(--card));
             border-radius: 1rem 1rem 0 0;
             display: flex;
@@ -549,15 +565,23 @@
             padding: 1rem 0;
             display: flex;
             flex-direction: column;
+            justify-content: center;
             gap: 0.5rem;
             touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
+            transition: padding-bottom 0.25s ease-out;
+        }
+        /* When nav is visible, add bottom padding and align to start */
+        .card-picker-modal.nav-visible .card-picker-cards {
+            justify-content: flex-start;
+            padding-bottom: 70px;
         }
         .card-picker-row {
             position: relative;
             width: 100%;
             min-height: 80px;
+            flex-shrink: 0;
             opacity: 0;
             animation: rowFadeIn 0.4s ease-out forwards;
         }
@@ -619,6 +643,10 @@
             padding: 0.75rem 1rem;
             border-top: 1px solid hsl(var(--border));
             background: hsl(var(--card));
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
             transform: translateY(100%);
             transition: transform 0.25s ease-out;
         }
@@ -666,25 +694,18 @@
             opacity: 0.3;
             cursor: not-allowed;
         }
-        .card-picker-action-btn.select-btn {
-            background: hsl(var(--primary));
-            color: hsl(var(--primary-foreground));
-            border-color: hsl(var(--primary));
-        }
-        .card-picker-action-btn.select-btn:active {
-            opacity: 0.8;
-        }
         
         /* Card ready to place - staged above deck */
         .deck-container .card.card-staged {
-            transform: translate(-50%, calc(-50% - 60px)) translateX(0px) scale(1.15) !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) translateY(-60px) scale(1.15) !important;
             z-index: 200 !important;
             box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), 0 0 20px rgba(255, 255, 255, 0.1);
             animation: cardStagedFloat 2s ease-in-out infinite;
         }
         @keyframes cardStagedFloat {
-            0%, 100% { transform: translate(-50%, calc(-50% - 60px)) translateX(0px) scale(1.15); }
-            50% { transform: translate(-50%, calc(-50% - 66px)) translateX(0px) scale(1.17); }
+            0%, 100% { transform: translate(-50%, -50%) translateY(-60px) scale(1.15); }
+            50% { transform: translate(-50%, -50%) translateY(-66px) scale(1.17); }
         }
         
         .card.dragging {
@@ -2262,22 +2283,17 @@ function createCardPickerModal() {
             <div class="card-picker-cards"></div>
             <div class="card-picker-nav" id="pickerNav">
                 <button class="card-picker-nav-btn" id="pickerPrevBtn" disabled>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M15 18l-6-6 6-6"/>
                     </svg>
                 </button>
-                <button class="card-picker-action-btn" id="pickerDeselectBtn" title="Deselect">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
-                </button>
-                <button class="card-picker-action-btn select-btn" id="pickerSelectBtn" title="Select Card">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button class="card-picker-action-btn" id="pickerSelectBtn" title="Select Card">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 6L9 17l-5-5"/>
                     </svg>
                 </button>
                 <button class="card-picker-nav-btn" id="pickerNextBtn" disabled>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 18l6-6-6-6"/>
                     </svg>
                 </button>
@@ -2495,11 +2511,13 @@ function deselectPickerCard() {
 function showPickerNav() {
     const nav = cardPickerModal?.querySelector('#pickerNav');
     if (nav) nav.classList.add('visible');
+    if (cardPickerModal) cardPickerModal.classList.add('nav-visible');
 }
 
 function hidePickerNav() {
     const nav = cardPickerModal?.querySelector('#pickerNav');
     if (nav) nav.classList.remove('visible');
+    if (cardPickerModal) cardPickerModal.classList.remove('nav-visible');
 }
 
 function confirmPickerSelection() {
@@ -2527,7 +2545,6 @@ function setupPickerNavigation(modal) {
     const prevBtn = modal.querySelector('#pickerPrevBtn');
     const nextBtn = modal.querySelector('#pickerNextBtn');
     const selectBtn = modal.querySelector('#pickerSelectBtn');
-    const deselectBtn = modal.querySelector('#pickerDeselectBtn');
     
     prevBtn.addEventListener('click', () => {
         if (pickerFocusedIndex > 0) {
@@ -2544,17 +2561,19 @@ function setupPickerNavigation(modal) {
     selectBtn.addEventListener('click', () => {
         confirmPickerSelection();
     });
-    
-    deselectBtn.addEventListener('click', () => {
-        deselectPickerCard();
-    });
 }
 
 function selectCardFromPicker(card, index) {
     triggerHaptic('medium');
     closeCardPickerModal();
     
-    // Create a staged card element (don't rely on it being in the visible deck)
+    // Remove the selected card from the deck array
+    deck = deck.filter(c => c.id !== card.id);
+    
+    // Re-render the deck (will show remaining cards at full opacity)
+    renderDeck();
+    
+    // Create a staged card element
     const selectedEl = document.createElement('div');
     selectedEl.className = 'card card-staged';
     selectedEl.dataset.cardId = card.id;
@@ -2565,28 +2584,28 @@ function selectCardFromPicker(card, index) {
         <div class="dev-label">${card.id}</div>
     `;
     
-    // Position it in the center of the deck container
-    selectedEl.style.left = '50%';
-    selectedEl.style.top = '30%';
-    selectedEl.style.transform = 'translate(-50%, -50%)';
-    selectedEl.style.zIndex = '200';
-    
-    // Add to deck container
-    deckContainer.appendChild(selectedEl);
+    // On mobile, append to body (position:fixed doesn't work inside transformed containers)
+    // On desktop, append to deck container
+    if (isMobileView()) {
+        document.body.appendChild(selectedEl);
+    } else {
+        selectedEl.style.left = '50%';
+        selectedEl.style.top = '50%';
+        deckContainer.appendChild(selectedEl);
+    }
     
     // Store reference
     stagedCard = selectedEl;
     stagedCard.dataset.deckIndex = index;
     
-    // Dim other cards
-    const deckCards = deckContainer.querySelectorAll('.card:not(.card-staged)');
-    deckCards.forEach(el => {
-        el.style.opacity = '0.4';
-    });
+    // Store the card data for when it's placed
+    stagedCard.cardData = card;
     
     // Add touch handler for dragging
     selectedEl.addEventListener('touchstart', handleDeckTouchStart, { passive: false });
     selectedEl.addEventListener('mousedown', startDrag);
+    
+    updateDevPanel();
 }
 
 function closeCardPickerModal() {
@@ -2621,18 +2640,18 @@ function handleDeckTouchStart(e) {
 function cancelStagedCard() {
     if (!stagedCard) return;
     
+    // Re-add the card to the deck if we have its data
+    if (stagedCard.cardData) {
+        deck.push(stagedCard.cardData);
+    }
+    
     // Remove the staged card element from DOM (it was dynamically created)
     stagedCard.remove();
     stagedCard = null;
     
-    // Restore opacity of all deck cards
-    const cards = deckContainer.querySelectorAll('.card');
-    cards.forEach(card => {
-        card.style.opacity = '';
-    });
-    
-    // Re-render deck to ensure clean state
+    // Re-render deck to show the returned card
     renderDeck();
+    updateDevPanel();
 }
 
 // Tap on deck area (not on a card) to cancel staged card
@@ -2712,7 +2731,9 @@ function endDrag(e) {
 
     if (droppedOnSurface) {
         const cardId = draggedCard.dataset.cardId;
-        const cardData = deck.find(c => c.id === cardId);
+        // For staged cards from picker, cardData is stored on the element
+        // For regular deck cards, find it in the deck array
+        const cardData = draggedCard.cardData || deck.find(c => c.id === cardId);
         if (cardData) {
             // Calculate position relative to the content (accounting for zoom/pan)
             // The content is transformed with translate(panX, panY) scale(currentZoom)
@@ -2726,21 +2747,38 @@ function endDrag(e) {
             // Since content uses transform-origin: center, and we're placing with percentages,
             // we need the position relative to the content's actual size
             placeCard(cardData, relX / currentZoom, relY / currentZoom);
-            deck = deck.filter(c => c.id !== cardId);
+            
+            // Only filter from deck if it wasn't already removed (staged cards are pre-removed)
+            if (!draggedCard.cardData) {
+                deck = deck.filter(c => c.id !== cardId);
+            }
+            
+            // Clear staged card reference if this was the staged card
+            if (draggedCard === stagedCard) {
+                stagedCard = null;
+            }
+            
             draggedCard.remove();
             updateDevPanel();
         }
     } else {
-        // Return card to deck container
-        draggedCard.classList.remove('dragging');
-        draggedCard.style.position = '';
-        draggedCard.style.left = '50%';
-        draggedCard.style.top = '50%';
-        draggedCard.style.zIndex = draggedCard.dataset.index;
-        const xPos = draggedCard.style.getPropertyValue('--base-x') || '0px';
-        draggedCard.style.transform = `translate(-50%, -50%) translateX(${xPos})`;
-        // Move back to deck container
-        deckContainer.appendChild(draggedCard);
+        // If this was a staged card, return it to floating position
+        if (draggedCard.classList.contains('card-staged')) {
+            draggedCard.classList.remove('dragging');
+            // On mobile, it stays in body with fixed positioning via CSS
+            // Just remove the dragging class and let CSS handle it
+        } else {
+            // Return regular card to deck container
+            draggedCard.classList.remove('dragging');
+            draggedCard.style.position = '';
+            draggedCard.style.left = '50%';
+            draggedCard.style.top = '50%';
+            draggedCard.style.zIndex = draggedCard.dataset.index;
+            const xPos = draggedCard.style.getPropertyValue('--base-x') || '0px';
+            draggedCard.style.transform = `translate(-50%, -50%) translateX(${xPos})`;
+            // Move back to deck container
+            deckContainer.appendChild(draggedCard);
+        }
     }
 
     document.removeEventListener('mousemove', drag);
