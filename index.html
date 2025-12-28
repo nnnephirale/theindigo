@@ -628,11 +628,6 @@
                        scale(var(--scale));
             -webkit-tap-highlight-color: transparent;
         }
-        /* Pressing state - subtle feedback during long-press */
-        .card-picker-card.pressing {
-            --scale: 0.95;
-            transition: transform 0.1s ease;
-        }
         /* Focused card state - no z-index change, only transforms */
         .card-picker-card.focused {
             --lift: -20px;
@@ -2437,6 +2432,9 @@ function createCardPickerModal() {
     // Setup navigation buttons
     setupPickerNavigation(cardPickerModal);
     
+    // Setup scrub selection for mobile
+    initPickerScrubSelection(cardPickerModal);
+    
     return cardPickerModal;
 }
 
@@ -2582,112 +2580,159 @@ function createPickerCard(card, index, cardW) {
     
     el.innerHTML = `<div class="card-picker-card-back"></div>`;
     
-    // Long-press to focus, tap to confirm (if already focused)
-    const LONG_PRESS_DURATION = 300; // ms
-    let pressTimer = null;
-    let pressStartTime = 0;
-    let hasMoved = false;
-    let startX = 0;
-    let startY = 0;
-    
-    function startPress(x, y) {
-        pressStartTime = Date.now();
-        hasMoved = false;
-        startX = x;
-        startY = y;
-        
-        // Add pressing visual feedback
-        el.classList.add('pressing');
-        
-        // Set timer for long-press
-        pressTimer = setTimeout(() => {
-            if (!hasMoved) {
-                el.classList.remove('pressing');
-                if (pickerFocusedIndex === index) {
-                    // Already focused - select it
-                    confirmPickerSelection();
-                } else {
-                    // Focus this card
-                    focusPickerCard(index);
-                }
-            }
-        }, LONG_PRESS_DURATION);
-    }
-    
-    function movePress(x, y) {
-        // If moved more than 10px, cancel the press
-        const dx = Math.abs(x - startX);
-        const dy = Math.abs(y - startY);
-        if (dx > 10 || dy > 10) {
-            hasMoved = true;
-            cancelPress();
-        }
-    }
-    
-    function cancelPress() {
-        if (pressTimer) {
-            clearTimeout(pressTimer);
-            pressTimer = null;
-        }
-        el.classList.remove('pressing');
-    }
-    
-    function endPress() {
-        const pressDuration = Date.now() - pressStartTime;
-        cancelPress();
-        
-        // If it was a short tap and card is already focused, confirm selection
-        if (!hasMoved && pressDuration < LONG_PRESS_DURATION) {
-            if (pickerFocusedIndex === index) {
-                confirmPickerSelection();
-            }
-            // Short tap on unfocused card does nothing - must long-press to focus
-        }
-    }
-    
-    // Touch events
-    el.addEventListener('touchstart', (e) => {
+    // Touch handling is done at the container level for scrub selection
+    // But we still need click for desktop fallback
+    el.addEventListener('click', (e) => {
         e.stopPropagation();
-        const touch = e.touches[0];
-        startPress(touch.clientX, touch.clientY);
-    }, { passive: true });
-    
-    el.addEventListener('touchmove', (e) => {
-        const touch = e.touches[0];
-        movePress(touch.clientX, touch.clientY);
-    }, { passive: true });
-    
-    el.addEventListener('touchend', (e) => {
-        e.stopPropagation();
-        endPress();
-    });
-    
-    el.addEventListener('touchcancel', () => {
-        cancelPress();
-    });
-    
-    // Mouse events (for desktop testing)
-    el.addEventListener('mousedown', (e) => {
-        e.stopPropagation();
-        startPress(e.clientX, e.clientY);
-    });
-    
-    el.addEventListener('mousemove', (e) => {
-        if (pressTimer) {
-            movePress(e.clientX, e.clientY);
+        // On desktop, click to focus, click again to select
+        if (pickerFocusedIndex === index) {
+            confirmPickerSelection();
+        } else {
+            focusPickerCard(index);
         }
-    });
-    
-    el.addEventListener('mouseup', (e) => {
-        e.stopPropagation();
-        endPress();
-    });
-    
-    el.addEventListener('mouseleave', () => {
-        cancelPress();
     });
     
     return el;
+}
+
+// ============================================
+// PICKER SCRUB SELECTION (press and slide)
+// ============================================
+
+let pickerScrubMode = false;
+let pickerScrubTimer = null;
+let pickerScrubStartX = 0;
+let pickerScrubStartY = 0;
+const SCRUB_INITIATE_DELAY = 150; // ms before scrub mode activates
+
+function initPickerScrubSelection(modal) {
+    const cardsContainer = modal.querySelector('.card-picker-cards');
+    if (!cardsContainer) return;
+    
+    cardsContainer.addEventListener('touchstart', handlePickerTouchStart, { passive: false });
+    cardsContainer.addEventListener('touchmove', handlePickerTouchMove, { passive: false });
+    cardsContainer.addEventListener('touchend', handlePickerTouchEnd);
+    cardsContainer.addEventListener('touchcancel', handlePickerTouchCancel);
+}
+
+function handlePickerTouchStart(e) {
+    if (e.touches.length !== 1) return;
+    
+    const touch = e.touches[0];
+    pickerScrubStartX = touch.clientX;
+    pickerScrubStartY = touch.clientY;
+    
+    // Start timer to initiate scrub mode
+    pickerScrubTimer = setTimeout(() => {
+        pickerScrubMode = true;
+        // Hide nav bar during scrub
+        hidePickerNav();
+        // Lift card under finger
+        updateScrubSelection(touch.clientX, touch.clientY);
+        triggerHaptic('light');
+    }, SCRUB_INITIATE_DELAY);
+}
+
+function handlePickerTouchMove(e) {
+    if (e.touches.length !== 1) return;
+    
+    const touch = e.touches[0];
+    
+    if (pickerScrubMode) {
+        // In scrub mode - update selection based on finger position
+        e.preventDefault(); // Prevent scrolling while scrubbing
+        updateScrubSelection(touch.clientX, touch.clientY);
+    } else if (pickerScrubTimer) {
+        // Not yet in scrub mode - check if moved too much (allow some tolerance)
+        const dx = Math.abs(touch.clientX - pickerScrubStartX);
+        const dy = Math.abs(touch.clientY - pickerScrubStartY);
+        
+        // If moved significantly before timer, cancel (user is scrolling)
+        if (dy > 15) {
+            clearTimeout(pickerScrubTimer);
+            pickerScrubTimer = null;
+        }
+    }
+}
+
+function handlePickerTouchEnd(e) {
+    if (pickerScrubTimer) {
+        clearTimeout(pickerScrubTimer);
+        pickerScrubTimer = null;
+    }
+    
+    if (pickerScrubMode) {
+        pickerScrubMode = false;
+        
+        // Select the currently focused card
+        if (pickerFocusedIndex >= 0) {
+            confirmPickerSelection();
+        }
+    }
+}
+
+function handlePickerTouchCancel() {
+    if (pickerScrubTimer) {
+        clearTimeout(pickerScrubTimer);
+        pickerScrubTimer = null;
+    }
+    
+    if (pickerScrubMode) {
+        pickerScrubMode = false;
+        // Unfocus without selecting
+        deselectPickerCard();
+    }
+}
+
+function updateScrubSelection(clientX, clientY) {
+    // Find which card is under the finger
+    // Temporarily hide pointer-events on current focused card to look beneath
+    const currentFocused = pickerFocusedIndex >= 0 ? pickerAllCards[pickerFocusedIndex]?.element : null;
+    if (currentFocused) {
+        currentFocused.style.pointerEvents = 'none';
+    }
+    
+    const elementUnderFinger = document.elementFromPoint(clientX, clientY);
+    
+    if (currentFocused) {
+        currentFocused.style.pointerEvents = '';
+    }
+    
+    // Check if it's a picker card
+    const cardEl = elementUnderFinger?.closest('.card-picker-card');
+    
+    if (cardEl) {
+        const index = parseInt(cardEl.dataset.globalIndex, 10);
+        if (index !== pickerFocusedIndex && !isNaN(index)) {
+            focusPickerCardSilent(index); // Focus without showing nav
+            triggerHaptic('light');
+        }
+    } else {
+        // Finger is in gap - unfocus all
+        if (pickerFocusedIndex >= 0) {
+            unfocusCurrentCard();
+        }
+    }
+}
+
+function focusPickerCardSilent(index) {
+    // Focus card without showing nav bar (used during scrub)
+    if (pickerFocusedIndex >= 0 && pickerAllCards[pickerFocusedIndex]) {
+        pickerAllCards[pickerFocusedIndex].element.classList.remove('focused');
+    }
+    
+    pickerFocusedIndex = index;
+    
+    if (index >= 0 && pickerAllCards[index]) {
+        pickerAllCards[index].element.classList.add('focused');
+    }
+}
+
+function unfocusCurrentCard() {
+    if (pickerFocusedIndex >= 0 && pickerAllCards[pickerFocusedIndex]) {
+        pickerAllCards[pickerFocusedIndex].element.classList.remove('focused');
+    }
+    pickerFocusedIndex = -1;
 }
 
 function focusPickerCard(index) {
