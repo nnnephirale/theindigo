@@ -214,6 +214,7 @@
     /* Added to ensure buttons stay reachable above the ghost deck */
     position: relative;
     z-index: 20;
+    padding-top: 10px;
 }
         
         /* Surface Tools (Aa, Zoom) */
@@ -358,9 +359,20 @@
             transform: translate(-50%, -50%) rotateY(180deg) !important; 
             animation: none;
             transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* Base shadow for smooth transition */
+        }
+        .placed-card.flipped:hover:not(.dragging):not(.lifting):not(.just-flipped) {
+            transform: translate(-50%, -50%) rotateY(180deg) scale(1.03) translateY(-3px) !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15);
+            z-index: 150;
         }
         .placed-card.flipped.reversed { 
             transform: translate(-50%, -50%) rotateY(180deg) rotate(180deg) !important; 
+        }
+        .placed-card.flipped.reversed:hover:not(.dragging):not(.lifting):not(.just-flipped) {
+            transform: translate(-50%, -50%) rotateY(180deg) rotate(180deg) scale(1.03) translateY(-3px) !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15);
+            z-index: 150;
         }
         .placed-card.flipped.lifting {
             transform: translate(-50%, -50%) rotateY(180deg) scale(1.08) translateY(-8px) !important;
@@ -3248,9 +3260,15 @@ function addPlacedCardHandlers(el, card) {
     // Time-based click vs drag detection
     let mouseDownTime = 0;
     let hasMoved = false;
+    let hasLiftedToBody = false;
     // Track cursor offset from card center to prevent jumping
     let dragOffsetX = 0;
     let dragOffsetY = 0;
+    // Store initial position for drag detection
+    let startX = 0;
+    let startY = 0;
+    
+    const DRAG_THRESHOLD = 5; // pixels before considered a drag
     
     // Helper to get coordinates
     function getEventCoords(e, forEnd = false) {
@@ -3259,10 +3277,13 @@ function addPlacedCardHandlers(el, card) {
         return { x: e.clientX, y: e.clientY };
     }
     
-    // Shared: Initialize drag state
+    // Initialize drag tracking (but don't move to body yet)
     function initDrag(coords) {
         mouseDownTime = Date.now();
         hasMoved = false;
+        hasLiftedToBody = false;
+        startX = coords.x;
+        startY = coords.y;
         
         // Calculate center of card on screen
         const rect = el.getBoundingClientRect();
@@ -3272,8 +3293,17 @@ function addPlacedCardHandlers(el, card) {
         // Calculate offset from cursor to center
         dragOffsetX = coords.x - centerX;
         dragOffsetY = coords.y - centerY;
+    }
+    
+    // Actually lift card to body (called when drag threshold exceeded)
+    function liftToBody() {
+        if (hasLiftedToBody) return;
+        hasLiftedToBody = true;
         
-        // LIFT TO BODY:
+        const rect = el.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
         // Move element to body so it isn't clipped by reading-surface
         document.body.appendChild(el);
         el.style.position = 'fixed';
@@ -3296,17 +3326,22 @@ function addPlacedCardHandlers(el, card) {
     
     // Shared: Handle move during drag
     function handleMove(coords) {
-        const elapsed = Date.now() - mouseDownTime;
-        if (elapsed >= 100) { // Slight delay to separate click from drag
+        const dx = Math.abs(coords.x - startX);
+        const dy = Math.abs(coords.y - startY);
+        
+        // Check if we've exceeded drag threshold
+        if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+            if (!hasLiftedToBody) {
+                liftToBody();
+            }
             hasMoved = true;
             
             // Move based on screen coordinates (minus offset to keep cursor relative)
             el.style.left = (coords.x - dragOffsetX) + 'px';
             el.style.top = (coords.y - dragOffsetY) + 'px';
             
-            // Highlight nearest slot logic requires converting screen coords to %
+            // Highlight nearest slot
             const surfaceRect = readingSurface.getBoundingClientRect();
-            // Simple approximation for highlighting (doesn't need perfect precision)
             const percentX = ((coords.x - surfaceRect.left) / surfaceRect.width) * 100;
             const percentY = ((coords.y - surfaceRect.top) / surfaceRect.height) * 100;
             highlightNearestSlot(percentX, percentY);
@@ -3317,7 +3352,7 @@ function addPlacedCardHandlers(el, card) {
     function handleEnd(coords) {
         clearSlotHighlights();
         
-        if (hasMoved && coords) {
+        if (hasMoved && coords && hasLiftedToBody) {
             // Check if dropped on deck
             const deckRect = document.querySelector('.deck-area').getBoundingClientRect();
             if (coords.x >= deckRect.left && coords.x <= deckRect.right && 
@@ -3330,25 +3365,17 @@ function addPlacedCardHandlers(el, card) {
             readingSurfaceContent.appendChild(el);
             el.style.position = 'absolute';
             el.classList.remove('dragging');
-            
-            // Reset transform (let CSS class handle rotation, we only handle scale via zoom)
+            el.style.zIndex = '';
             el.style.transform = '';
             
-            // Calculate new percentage position relative to zoomed content
+            // Calculate new percentage position
             const contentRect = readingSurfaceContent.getBoundingClientRect();
-            // The position relative to the *content container*
             const relX = (coords.x - dragOffsetX - contentRect.left) / currentZoom;
             const relY = (coords.y - dragOffsetY - contentRect.top) / currentZoom;
             
-            // Convert to percentages based on the surface size (which defines 100%)
             const surfaceRect = readingSurface.getBoundingClientRect();
-            let newPercentX = (relX / (contentRect.width / currentZoom)) * 100; 
-            // Note: content width/zoom = unscaled width. 
-            // If content is 100% of surface, this is (relX / surfaceWidth) * 100
-            
-            // Since our 'placed-card' CSS uses surface-relative sizing, let's use surface dimensions
-            newPercentX = (relX / (surfaceRect.width)) * 100;
-            let newPercentY = (relY / (surfaceRect.height)) * 100;
+            let newPercentX = (relX / surfaceRect.width) * 100;
+            let newPercentY = (relY / surfaceRect.height) * 100;
 
             const nearestSlot = findNearestSlot(newPercentX, newPercentY);
             if (nearestSlot) {
@@ -3363,24 +3390,21 @@ function addPlacedCardHandlers(el, card) {
             
             updateSpreadSlotsFilled();
             saveCurrentReading();
-        } else {
-            // If it was just a click (no move), we must put it back into the surface
-            // (since initDrag moved it to body)
-            if (el.parentElement === document.body) {
-                readingSurfaceContent.appendChild(el);
-                el.style.position = 'absolute';
-                el.style.transform = '';
-                el.classList.remove('dragging');
-                
-                // Restore original % positions
-                el.style.left = el.dataset.percentX + '%';
-                el.style.top = el.dataset.percentY + '%';
-            }
+        } else if (hasLiftedToBody) {
+            // Was lifted but didn't move far - put back
+            readingSurfaceContent.appendChild(el);
+            el.style.position = 'absolute';
+            el.style.transform = '';
+            el.classList.remove('dragging');
+            el.style.zIndex = '';
+            el.style.left = el.dataset.percentX + '%';
+            el.style.top = el.dataset.percentY + '%';
         }
+        // If never lifted to body, card is still in place - no cleanup needed
         
         // Click action (Flip/Modal) - only if quick and didn't move
         const elapsed = Date.now() - mouseDownTime;
-        if (elapsed < 150 && !hasMoved) {
+        if (elapsed < 200 && !hasMoved) {
             if (!el.classList.contains('flipped') && !el.classList.contains('flipping')) {
                 const willReverse = reversalsEnabled && Math.random() < 0.5;
                 el.classList.add('flipping');
@@ -3388,9 +3412,14 @@ function addPlacedCardHandlers(el, card) {
                 
                 setTimeout(() => {
                     el.classList.remove('flipping', 'will-reverse');
-                    el.classList.add('flipped');
+                    el.classList.add('flipped', 'just-flipped');
                     if (willReverse) el.classList.add('reversed');
                     saveCurrentReading();
+                    
+                    // Remove just-flipped after transition can settle
+                    setTimeout(() => {
+                        el.classList.remove('just-flipped');
+                    }, 50);
                 }, 600);
             } else if (el.classList.contains('flipped')) {
                 el.classList.add('lifting');
@@ -3422,9 +3451,6 @@ function addPlacedCardHandlers(el, card) {
     
     // Touch events
     el.addEventListener('touchstart', e => {
-        // Don't prevent default immediately to allow pinch-zoom? 
-        // No, card drag should override zoom.
-        // e.preventDefault(); // Optional: remove if blocking scroll is bad
         initDrag(getEventCoords(e));
         
         const onMove = e => handleMove(getEventCoords(e));
