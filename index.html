@@ -1027,6 +1027,124 @@
         .spread-preview-slot { width: 16px; height: 24px; border: 1px solid hsl(var(--border)); border-radius: 2px; background: hsl(var(--muted) / 0.3); }
         .spread-panel-footer { padding: 0.75rem 1.25rem; border-top: 1px solid hsl(var(--border)); }
         
+        /* Spread List View */
+        .spread-list-view {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        /* Spread Detail View */
+        .spread-detail {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            max-height: 80vh;
+        }
+        .spread-detail.active {
+            display: flex;
+        }
+        .spread-detail-header {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 1rem 1.25rem; border-bottom: 1px solid hsl(var(--border));
+            flex-shrink: 0;
+        }
+        .spread-detail-back {
+            padding: 0.25rem;
+            display: flex; align-items: center; justify-content: center;
+            background: none; border: none; cursor: pointer;
+            color: hsl(var(--muted-foreground));
+            transition: color 0.15s;
+        }
+        .spread-detail-back:hover { color: hsl(var(--foreground)); }
+        .spread-detail-back svg { width: 1.25rem; height: 1.25rem; }
+        .spread-detail-title { font-size: 1rem; font-weight: 600; margin: 0; flex: 1; }
+        .spread-detail-content {
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 1.25rem;
+            min-height: 0; /* Important for flex scrolling */
+        }
+        .spread-detail-preview {
+            background: hsl(var(--muted) / 0.5);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin: 0.25rem 0 1.5rem 0;
+            position: relative;
+            aspect-ratio: 4/3;
+            max-height: 200px;
+        }
+        .spread-detail-preview-card {
+            position: absolute;
+            width: 32px; height: 48px;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 3px;
+            transform: translate(-50%, -50%);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.625rem; font-weight: 600;
+            color: hsl(var(--muted-foreground));
+        }
+        .spread-detail-info { margin-bottom: 1rem; }
+        .spread-detail-info h4 {
+            font-size: 0.875rem; font-weight: 600; margin: 0 0 0.5rem 0;
+        }
+        .spread-detail-info p {
+            font-size: 0.8125rem; color: hsl(var(--muted-foreground));
+            line-height: 1.6; margin: 0 0 0.75rem 0;
+        }
+        .spread-detail-info p:last-child { margin-bottom: 0; }
+        .spread-detail-positions {
+            margin-top: 1.25rem;
+        }
+        .spread-detail-positions h4 {
+            font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.05em; color: hsl(var(--muted-foreground));
+            margin: 0 0 0.75rem 0;
+        }
+        .spread-position-item {
+            padding: 0.75rem;
+            background: hsl(var(--muted) / 0.3);
+            border-radius: calc(var(--radius) - 2px);
+            margin-bottom: 0.5rem;
+        }
+        .spread-position-item:last-child { margin-bottom: 0; }
+        .spread-position-name {
+            font-size: 0.8125rem; font-weight: 600; margin-bottom: 0.25rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .spread-position-name .position-number {
+            width: 1.25rem; height: 1.25rem;
+            background: hsl(var(--primary) / 0.15);
+            color: hsl(var(--primary));
+            border-radius: 3px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.625rem; font-weight: 700;
+        }
+        .spread-position-prompt {
+            font-size: 0.75rem; color: hsl(var(--muted-foreground));
+            line-height: 1.5;
+        }
+        .spread-detail-credit {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid hsl(var(--border));
+            font-size: 0.6875rem;
+            color: hsl(var(--muted-foreground));
+            font-style: italic;
+        }
+        .spread-detail-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid hsl(var(--border));
+            flex-shrink: 0;
+        }
+        .spread-detail.info-only .spread-detail-footer {
+            display: none;
+        }
+        .spread-detail.info-only .spread-detail-back {
+            /* In info-only mode, back button closes the modal */
+        }
+        
         /* Spread Slots on Reading Surface */
         .spread-slot {
             position: absolute; transform: translate(-50%, -50%);
@@ -1118,12 +1236,14 @@
             background: hsl(var(--card));
             border: 1px solid hsl(var(--border)); border-radius: var(--radius);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 100; overflow: hidden;
+            z-index: 100;
             display: none;
             transition: width 0.2s ease-out, height 0.2s ease-out;
+            overflow: hidden;
         }
         .spread-reference:not(.minimized) {
             resize: both;
+            overflow: visible;
         }
         .spread-reference.active { display: block; }
         .spread-reference.dragging {
@@ -1134,26 +1254,11 @@
             display: flex; align-items: center; justify-content: space-between;
             padding: 0.375rem 0.5rem; background: hsl(var(--muted) / 0.5);
             border-bottom: 1px solid hsl(var(--border));
-            cursor: move;
+            cursor: grab;
             gap: 0.5rem;
         }
-        .spread-reference-notch {
-            width: 12px; height: 12px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s ease-out;
-        }
-        .spread-reference-notch::before {
-            content: '';
-            width: 8px; height: 8px;
-            border-left: 2px solid hsl(var(--muted-foreground));
-            border-bottom: 2px solid hsl(var(--muted-foreground));
-            transform: rotate(-45deg) translateY(-2px);
-        }
-        .spread-reference.minimized .spread-reference-notch {
-            transform: rotate(180deg);
+        .spread-reference-header:active {
+            cursor: grabbing;
         }
         .spread-reference-title {
             font-size: 0.625rem; font-weight: 600; color: hsl(var(--foreground));
@@ -1163,23 +1268,27 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .spread-reference-close {
-            width: 1.25rem; height: 1.25rem; border-radius: 50%;
-            background: transparent; border: none; cursor: pointer;
+        .spread-reference-toggle {
+            width: 1rem; height: 1rem;
             display: flex; align-items: center; justify-content: center;
             color: hsl(var(--muted-foreground)); 
             flex-shrink: 0;
-            transition: color 0.15s;
+            transition: transform 0.2s ease-out;
         }
-        .spread-reference-close:hover { color: hsl(var(--foreground)); }
-        .spread-reference-close svg {
-            width: 0.875rem; height: 0.875rem;
-            stroke-width: 1.5;
+        .spread-reference-toggle svg {
+            width: 0.75rem; height: 0.75rem;
+        }
+        .spread-reference.minimized .spread-reference-toggle {
+            transform: rotate(180deg);
         }
         .spread-reference-content {
-            padding: 0.5rem; aspect-ratio: 1; position: relative;
-            background: hsl(var(--background)); min-height: 100px;
+            padding: 1rem 0.5rem 0.5rem 0.5rem; 
+            aspect-ratio: 1; 
+            position: relative;
+            background: hsl(var(--background)); 
+            min-height: 100px;
             transition: height 0.2s ease-out, padding 0.2s ease-out, opacity 0.15s ease-out;
+            cursor: pointer;
         }
         .spread-reference.minimized .spread-reference-content {
             height: 0 !important;
@@ -1301,13 +1410,12 @@
                 </div>
                 <div class="spread-reference" id="spreadReference">
                     <div class="spread-reference-header" id="spreadRefHeader">
-                        <div class="spread-reference-notch"></div>
                         <span class="spread-reference-title" id="spreadRefTitle">Spread</span>
-                        <button class="spread-reference-close" id="spreadRefClose">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="spread-reference-toggle">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                             </svg>
-                        </button>
+                        </div>
                     </div>
                     <div class="spread-reference-content" id="spreadRefContent">
                         <!-- Populated by JS -->
@@ -1427,19 +1535,40 @@
     
     <!-- Spread Panel -->
     <div class="spread-panel" id="spreadPanel">
-        <div class="spread-panel-header">
-            <h3>Pick a Spread</h3>
-            <button class="btn btn-ghost spread-panel-close" id="spreadPanelClose">
-                <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
+        <!-- Spread List View -->
+        <div class="spread-list-view" id="spreadListView">
+            <div class="spread-panel-header">
+                <h3>Pick a Spread</h3>
+                <button class="btn btn-ghost spread-panel-close" id="spreadPanelClose">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="spread-list" id="spreadList">
+                <!-- Populated by JS -->
+            </div>
+            <div class="spread-panel-footer">
+                <button class="btn btn-outline" id="clearSpreadBtn">Clear Spread</button>
+            </div>
         </div>
-        <div class="spread-list" id="spreadList">
-            <!-- Populated by JS -->
-        </div>
-        <div class="spread-panel-footer">
-            <button class="btn btn-outline" id="clearSpreadBtn">Clear Spread</button>
+        
+        <!-- Spread Detail View -->
+        <div class="spread-detail" id="spreadDetailView">
+            <div class="spread-detail-header">
+                <button class="spread-detail-back" id="spreadDetailBack">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h3 class="spread-detail-title" id="spreadDetailTitle">Spread Name</h3>
+            </div>
+            <div class="spread-detail-content" id="spreadDetailContent">
+                <!-- Populated by JS -->
+            </div>
+            <div class="spread-detail-footer">
+                <button class="btn btn-outline" id="useSpreadBtn">Use Spread</button>
+            </div>
         </div>
     </div>
     <div class="spread-overlay" id="spreadOverlay"></div>
@@ -4539,13 +4668,14 @@ let desktopPanStartPanX = 0;
 let desktopPanStartPanY = 0;
 
 readingSurface.addEventListener('mousedown', e => {
-    // Only pan if clicking on empty space (not cards, text boxes, buttons)
+    // Only pan if clicking on empty space (not cards, text boxes, buttons, spread reference)
     // And not in text mode
     if (textModeActive) return;
     if (e.target.closest('.placed-card')) return;
     if (e.target.closest('.text-box')) return;
     if (e.target.closest('.spread-slot')) return;
     if (e.target.closest('button')) return;
+    if (e.target.closest('.spread-reference')) return;
     
     // Only left mouse button
     if (e.button !== 0) return;
@@ -4887,6 +5017,21 @@ const SPREADS = {
         id: 'spirit',
         name: 'The Spirit Spread',
         description: 'A five-card elemental cross. Earth (North), Air (East), Fire (South), Water (West), and Spirit at center.',
+        detailedDescription: `The Spirit Spread is a popular and useful spread among many tarot readers, with many variations. The four elemental cards represent the four suits, and the central Spirit card represents the Major Arcana.
+
+The first card represents the direction North, the element Earth, and the Tarot suit of Pentacles. The second card represents the direction East, the element Air, and the Tarot suit of Swords. The third card represents the direction South, the element Fire, and the Tarot suit of Wands. The fourth card represents the direction West, the element Water, and the Tarot suit of Cups. Finally, the fifth card in the center of the cross represents Spirit and the archetypal Major Arcana.
+
+This reading is especially useful for analyzing a person or a situation. When the character of the person or a situation is described to us metaphorically through the cards, it is easier to see the component and synergistic aspects, the harmonies and the chaotic elements at work.
+
+The Spirit Spread bridges the Past, Present and Future Spread and the Celtic Cross in terms of complexity, making it an excellent intermediate spread for those ready to explore beyond simple three-card readings.`,
+        credit: 'Spread information courtesy of Fool\'s Dog Tarot',
+        positionDescriptions: {
+            1: 'This card represents the physical and material qualities of the person or situation. Look to this card for information about physical health and all aspects of wealth, such as inheritance, property and real estate.',
+            2: 'This card represents the mental aspects of the person or situation. Look to this card for information about personal and interpersonal communications, mental health or illness, or the group mind created by those involved in a situation.',
+            3: 'This card represents the strength of character of a person, or the power of a situation. Look to this card for information about the passion and will alive within a person, or the pivotal power of a situation to foment change and to affect all those involved.',
+            4: 'This card represents the emotional characteristics of a person or a situation. Look to this card for information about the normal emotional state and the range of emotions from a person, or about the emotional development and the value of emotion within a group.',
+            5: 'This card provides archetypal information about the person or situation that is the focus of the reading. Look to this card for overarching resonances, for commentary about a person\'s future path, or what kind of future trajectory will manifest from a situation. Take careful note of this card, especially what suit and arcana it comes from, and you will learn much.'
+        },
         positions: [
             { id: 1, name: 'Earth', percentX: 50, percentY: 15, prompt: 'Physical and material aspects: health, wealth, property' },
             { id: 2, name: 'Air', percentX: 65, percentY: 45, prompt: 'Mental aspects: communication, thoughts, intellect' },
@@ -4906,6 +5051,14 @@ const SPREADS = {
         id: 'treeOfLife',
         name: 'Tree of Life',
         description: 'Rachel Mann\'s Practical Tree of Life via Mary K. Greer. Work down the pillars (1-6), then up the middle (7-10). Da\'at (11) bridges knowledge.',
+        detailedDescription: `This is Rachel Mann's Practical Tree of Life spread, as shared by Mary K. Greer. The Tree of Life is a profound map of consciousness from the Kabbalistic tradition, and this spread adapts it for practical tarot reading.
+
+The spread follows a specific reading order: work down the outer pillars first (positions 1-6), then ascend the middle pillar (positions 7-10). Da'at (position 11) represents hidden knowledge that bridges understanding.
+
+The right pillar (Force, For, Feelings) represents active, expansive energy. The left pillar (Form, Against, Thoughts) represents receptive, constraining energy. The middle pillar represents balance and the path of spiritual development.
+
+This spread is excellent for deep self-examination, understanding complex situations, and exploring the interplay between different aspects of your life or question. Each position corresponds to a Sephirah on the traditional Tree of Life, bringing rich symbolic meaning to the reading.`,
+        credit: 'Rachel Mann\'s spread via Mary K. Greer',
         positions: [
             { id: 10, name: 'Spirit', percentX: 50, percentY: 5, prompt: 'The divine or higher purpose guiding the situation' },
             { id: 2, name: 'Form', percentX: 30, percentY: 20, prompt: 'The structure or form the issue takes' },
@@ -5156,9 +5309,18 @@ const spreadOverlay = document.getElementById('spreadOverlay');
 const spreadPanelClose = document.getElementById('spreadPanelClose');
 const spreadList = document.getElementById('spreadList');
 const clearSpreadBtn = document.getElementById('clearSpreadBtn');
+const spreadListView = document.getElementById('spreadListView');
+const spreadDetailView = document.getElementById('spreadDetailView');
+const spreadDetailBack = document.getElementById('spreadDetailBack');
+const spreadDetailTitle = document.getElementById('spreadDetailTitle');
+const spreadDetailContent = document.getElementById('spreadDetailContent');
+const useSpreadBtn = document.getElementById('useSpreadBtn');
+
+let selectedSpreadId = null;
 
 function openSpreadPanel() {
     renderSpreadList();
+    showSpreadListView();
     spreadPanel.classList.add('active');
     spreadOverlay.classList.add('active');
 }
@@ -5166,6 +5328,96 @@ function openSpreadPanel() {
 function closeSpreadPanel() {
     spreadPanel.classList.remove('active');
     spreadOverlay.classList.remove('active');
+    // Reset to list view for next open
+    setTimeout(() => showSpreadListView(), 200);
+}
+
+function showSpreadListView() {
+    spreadListView.style.display = 'flex';
+    spreadListView.style.flexDirection = 'column';
+    spreadListView.style.height = '100%';
+    spreadDetailView.classList.remove('active');
+    spreadDetailView.classList.remove('info-only');
+}
+
+function showSpreadDetailView(spreadId, infoOnly = false) {
+    const spread = SPREADS[spreadId];
+    if (!spread) return;
+    
+    selectedSpreadId = infoOnly ? null : spreadId; // Don't allow "Use Spread" in info-only mode
+    spreadDetailTitle.textContent = spread.name;
+    
+    // Build preview visualization
+    const positions = spread.positions;
+    const minX = Math.min(...positions.map(p => p.percentX));
+    const maxX = Math.max(...positions.map(p => p.percentX));
+    const minY = Math.min(...positions.map(p => p.percentY));
+    const maxY = Math.max(...positions.map(p => p.percentY));
+    // Use larger padding to ensure cards stay well within the preview box
+    const padX = 20;
+    const padY = 18;
+    const rangeX = (maxX - minX) + padX * 2;
+    const rangeY = (maxY - minY) + padY * 2;
+    
+    const previewCards = positions.map(pos => {
+        // Map positions to percentages with padding buffer
+        const normX = ((pos.percentX - minX + padX) / rangeX) * 100;
+        const normY = ((pos.percentY - minY + padY) / rangeY) * 100;
+        // Clamp to ensure cards stay within bounds (accounting for card size)
+        const clampedX = Math.max(12, Math.min(88, normX));
+        const clampedY = Math.max(15, Math.min(85, normY));
+        return `<div class="spread-detail-preview-card" style="left: ${clampedX}%; top: ${clampedY}%">${pos.id}</div>`;
+    }).join('');
+    
+    // Build position descriptions - sort by ID for numeric order
+    const sortedPositions = [...positions].sort((a, b) => a.id - b.id);
+    const positionItems = sortedPositions.map(pos => {
+        const detailedPrompt = spread.positionDescriptions?.[pos.id] || pos.prompt;
+        return `
+            <div class="spread-position-item">
+                <div class="spread-position-name">
+                    <span class="position-number">${pos.id}</span>
+                    ${pos.name}
+                </div>
+                <div class="spread-position-prompt">${detailedPrompt}</div>
+            </div>
+        `;
+    }).join('');
+    
+    // Build content
+    const detailedDesc = spread.detailedDescription || spread.description;
+    const creditHtml = spread.credit ? `<div class="spread-detail-credit">${spread.credit}</div>` : '';
+    
+    spreadDetailContent.innerHTML = `
+        <div class="spread-detail-preview">${previewCards}</div>
+        <div class="spread-detail-info">
+            <h4>About This Spread</h4>
+            <p>${detailedDesc.replace(/\n\n/g, '</p><p>')}</p>
+        </div>
+        <div class="spread-detail-positions">
+            <h4>Card Positions</h4>
+            ${positionItems}
+        </div>
+        ${creditHtml}
+    `;
+    
+    spreadListView.style.display = 'none';
+    spreadDetailView.classList.add('active');
+    
+    // Toggle info-only mode (hides Use Spread button)
+    if (infoOnly) {
+        spreadDetailView.classList.add('info-only');
+    } else {
+        spreadDetailView.classList.remove('info-only');
+    }
+}
+
+// Show spread info modal from the reference panel
+function showSpreadInfo() {
+    if (!currentSpread) return;
+    showSpreadDetailView(currentSpread.id, true);
+    spreadPanel.classList.add('active');
+    spreadOverlay.classList.add('active');
 }
 
 function renderSpreadList() {
@@ -5190,7 +5442,14 @@ function renderSpreadList() {
 }
 
 function selectSpread(spreadId) {
-    const spread = SPREADS[spreadId];
+    // Show detail view instead of immediately selecting
+    showSpreadDetailView(spreadId);
+}
+
+function confirmUseSpread() {
+    if (!selectedSpreadId) return;
+    
+    const spread = SPREADS[selectedSpreadId];
     if (!spread) return;
     
     currentSpread = spread;
@@ -5341,7 +5600,6 @@ const spreadReference = document.getElementById('spreadReference');
 const spreadRefHeader = document.getElementById('spreadRefHeader');
 const spreadRefTitle = document.getElementById('spreadRefTitle');
 const spreadRefContent = document.getElementById('spreadRefContent');
-const spreadRefClose = document.getElementById('spreadRefClose');
 
 function showSpreadReference() {
     if (!currentSpread) return;
@@ -5454,7 +5712,6 @@ function endRefDrag() {
 
 // Mouse drag events
 spreadRefHeader.addEventListener('mousedown', e => {
-    if (e.target === spreadRefClose) return;
     startRefDrag(e.clientX, e.clientY);
     e.preventDefault();
 });
@@ -5469,7 +5726,6 @@ document.addEventListener('mouseup', () => {
 
 // Touch drag events
 spreadRefHeader.addEventListener('touchstart', e => {
-    if (e.target === spreadRefClose) return;
     const touch = e.touches[0];
     startRefDrag(touch.clientX, touch.clientY);
     e.preventDefault();
@@ -5484,8 +5740,6 @@ document.addEventListener('touchmove', e => {
 document.addEventListener('touchend', () => {
     endRefDrag();
 });
-
-spreadRefClose.addEventListener('click', hideSpreadReference);
 
 function clearSpreadSlots() {
     spreadSlots.forEach(s => s.element.remove());
@@ -5547,6 +5801,18 @@ spreadBtn.addEventListener('click', openSpreadPanel);
 spreadPanelClose.addEventListener('click', closeSpreadPanel);
 spreadOverlay.addEventListener('click', closeSpreadPanel);
 clearSpreadBtn.addEventListener('click', clearSpread);
+spreadDetailBack.addEventListener('click', () => {
+    // If in info-only mode, close the panel entirely
+    if (spreadDetailView.classList.contains('info-only')) {
+        closeSpreadPanel();
+    } else {
+        showSpreadListView();
+    }
+});
+useSpreadBtn.addEventListener('click', confirmUseSpread);
+
+// Click on spread reference content to show spread info
+spreadRefContent.addEventListener('click', showSpreadInfo);
 
 spreadList.addEventListener('click', e => {
     const item = e.target.closest('.spread-item');
