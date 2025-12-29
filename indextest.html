@@ -353,6 +353,9 @@
             transition: none;
             box-shadow: none; /* Disable shadow during flip to prevent mobile rendering glitch */
         }
+        .placed-card.flipping .card-face {
+            box-shadow: none; /* Also disable child shadows during flip */
+        }
         .placed-card.flipping.will-reverse {
             animation: cardFlipReversed 0.6s ease-out forwards;
         }
@@ -482,6 +485,7 @@
                 clip-path: none;
                 -webkit-mask-image: none;
                 mask-image: none;
+                pointer-events: auto; /* Allow taps on mobile */
             }
             
             /* Mobile staged card - visual styles only, position controlled by JS */
