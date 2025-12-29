@@ -336,16 +336,16 @@
             100% { transform: translate(-50%, -50%) scale(1) translateY(0); opacity: 1; }
         }
         @keyframes cardFlip {
-            0% { transform: translate(-50%, -50%) rotateY(0deg) translateY(0) scale(1); }
+            0% { transform: translate(-50%, -50%) rotateY(0deg) translateY(0) scale(1); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
             30% { transform: translate(-50%, -50%) rotateY(0deg) translateY(-30px) scale(1.05); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-            50% { transform: translate(-50%, -50%) rotateY(90deg) translateY(-30px) scale(1.05); }
-            100% { transform: translate(-50%, -50%) rotateY(180deg) translateY(0) scale(1); }
+            50% { transform: translate(-50%, -50%) rotateY(90deg) translateY(-30px) scale(1.05); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+            100% { transform: translate(-50%, -50%) rotateY(180deg) translateY(0) scale(1); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
         }
         @keyframes cardFlipReversed {
-            0% { transform: translate(-50%, -50%) rotateY(0deg) translateY(0) scale(1); }
+            0% { transform: translate(-50%, -50%) rotateY(0deg) translateY(0) scale(1); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
             30% { transform: translate(-50%, -50%) rotateY(0deg) translateY(-30px) scale(1.05); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-            50% { transform: translate(-50%, -50%) rotateY(90deg) translateY(-30px) scale(1.05); }
-            100% { transform: translate(-50%, -50%) rotateY(180deg) rotate(180deg) translateY(0) scale(1); }
+            50% { transform: translate(-50%, -50%) rotateY(90deg) translateY(-30px) scale(1.05); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+            100% { transform: translate(-50%, -50%) rotateY(180deg) rotate(180deg) translateY(0) scale(1); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
         }
         .placed-card.flipping {
             animation: cardFlip 0.6s ease-out forwards;
@@ -2413,10 +2413,12 @@ function createDummyCardElement(index) {
         <div class="card-face card-front"></div>
     `;
     
-    // Tap opens the card picker modal (same as before)
+    // Tap opens the card picker modal immediately
     el.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         if (!stagedCard) {
+            triggerHaptic('light');
             openCardPickerModal();
         }
     }, { passive: false });
