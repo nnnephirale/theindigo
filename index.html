@@ -207,11 +207,14 @@
             transition: opacity 0.3s;
         }
         .reading-surface.has-cards .reading-surface-content::before { opacity: 0; }
-        .deck-controls {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-        }
+.deck-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    /* Added to ensure buttons stay reachable above the ghost deck */
+    position: relative;
+    z-index: 20;
+}
         
         /* Surface Tools (Aa, Zoom) */
         .surface-tools {
@@ -393,15 +396,26 @@
             transition: transform 0.25s ease, clip-path 0.25s ease;
             clip-path: inset(0 0 0 0);
         }
-        .deck-area.docked .deck-container {
-            transform: translateY(calc(100% - 78px));
-            clip-path: inset(0 0 calc(100% - 78px) 0);
-        }
-        .deck-area.docked:hover .deck-container,
-        .deck-area.docked.dragging-active .deck-container {
-            transform: translateY(0);
-            clip-path: inset(0 0 0 0);
-        }
+.deck-area.docked .deck-container {
+    transform: translateY(calc(100% - 78px));
+    /* Remove the hard line */
+    clip-path: none;
+    /* Create the soft gradient fade (adjusting to 55% ensures padding above buttons) */
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 20%, transparent 55%);
+    mask-image: linear-gradient(to bottom, black 0%, black 20%, transparent 55%);
+    /* CRITICAL FIX: Make the invisible/docked cards ignore the mouse */
+    /* This allows you to click the buttons 'through' the faded cards */
+    pointer-events: none; 
+}
+.deck-area.docked:hover .deck-container,
+.deck-area.docked.dragging-active .deck-container {
+    transform: translateY(0);
+    /* Restore hard edges and mouse interaction when undocked */
+    clip-path: inset(0 0 0 0);
+    -webkit-mask-image: none;
+    mask-image: none;
+    pointer-events: auto;
+}
         @media (max-width: 600px) {
             /* Mobile header: show menu button, hide title and dev toggle */
             .menu-btn { display: flex; }
@@ -452,6 +466,8 @@
             .deck-area.docked:hover .deck-container {
                 transform: translateY(calc(100% - 130px));
                 clip-path: none;
+                -webkit-mask-image: none;
+                mask-image: none;
             }
             
             /* Mobile staged card - visual styles only, position controlled by JS */
@@ -3232,10 +3248,11 @@ function addPlacedCardHandlers(el, card) {
     // Time-based click vs drag detection
     let mouseDownTime = 0;
     let hasMoved = false;
-    let startX, startY, startLeft, startTop;
-    const HOLD_THRESHOLD = 150; // ms - anything longer is considered a drag intent
+    // Track cursor offset from card center to prevent jumping
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
     
-    // Helper to get coordinates from mouse or touch event
+    // Helper to get coordinates
     function getEventCoords(e, forEnd = false) {
         if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
         if (forEnd && e.changedTouches?.[0]) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
@@ -3246,35 +3263,53 @@ function addPlacedCardHandlers(el, card) {
     function initDrag(coords) {
         mouseDownTime = Date.now();
         hasMoved = false;
-        startX = coords.x;
-        startY = coords.y;
         
-        // Get current position - cards use percentage positioning with transform centering
-        const contentRect = readingSurfaceContent.getBoundingClientRect();
+        // Calculate center of card on screen
         const rect = el.getBoundingClientRect();
-        const cardCenterX = rect.left + rect.width / 2 - contentRect.left;
-        const cardCenterY = rect.top + rect.height / 2 - contentRect.top;
-        startLeft = cardCenterX / currentZoom;
-        startTop = cardCenterY / currentZoom;
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
         
-        el.style.zIndex = 100;
+        // Calculate offset from cursor to center
+        dragOffsetX = coords.x - centerX;
+        dragOffsetY = coords.y - centerY;
+        
+        // LIFT TO BODY:
+        // Move element to body so it isn't clipped by reading-surface
+        document.body.appendChild(el);
+        el.style.position = 'fixed';
+        el.style.zIndex = '10000';
+        
+        // Set position to current screen coordinates
+        el.style.left = centerX + 'px';
+        el.style.top = centerY + 'px';
+        
+        // Maintain visual scale and rotation
+        let transform = `translate(-50%, -50%) scale(${currentZoom})`;
+        if (el.classList.contains('flipped')) {
+            transform += ' rotateY(180deg)';
+            if (el.classList.contains('reversed')) transform += ' rotate(180deg)';
+        }
+        el.style.transform = transform;
+        
+        el.classList.add('dragging');
     }
     
     // Shared: Handle move during drag
     function handleMove(coords) {
         const elapsed = Date.now() - mouseDownTime;
-        if (elapsed >= HOLD_THRESHOLD) {
+        if (elapsed >= 100) { // Slight delay to separate click from drag
             hasMoved = true;
-            const dx = (coords.x - startX) / currentZoom;
-            const dy = (coords.y - startY) / currentZoom;
-            const newLeft = startLeft + dx;
-            const newTop = startTop + dy;
-            el.style.left = newLeft + 'px';
-            el.style.top = newTop + 'px';
             
-            // Highlight nearest slot during drag
+            // Move based on screen coordinates (minus offset to keep cursor relative)
+            el.style.left = (coords.x - dragOffsetX) + 'px';
+            el.style.top = (coords.y - dragOffsetY) + 'px';
+            
+            // Highlight nearest slot logic requires converting screen coords to %
             const surfaceRect = readingSurface.getBoundingClientRect();
-            highlightNearestSlot((newLeft / surfaceRect.width) * 100, (newTop / surfaceRect.height) * 100);
+            // Simple approximation for highlighting (doesn't need perfect precision)
+            const percentX = ((coords.x - surfaceRect.left) / surfaceRect.width) * 100;
+            const percentY = ((coords.y - surfaceRect.top) / surfaceRect.height) * 100;
+            highlightNearestSlot(percentX, percentY);
         }
     }
     
@@ -3283,6 +3318,7 @@ function addPlacedCardHandlers(el, card) {
         clearSlotHighlights();
         
         if (hasMoved && coords) {
+            // Check if dropped on deck
             const deckRect = document.querySelector('.deck-area').getBoundingClientRect();
             if (coords.x >= deckRect.left && coords.x <= deckRect.right && 
                 coords.y >= deckRect.top && coords.y <= deckRect.bottom) {
@@ -3290,10 +3326,30 @@ function addPlacedCardHandlers(el, card) {
                 return;
             }
             
-            const surfaceRect = readingSurface.getBoundingClientRect();
-            let newPercentX = (el.offsetLeft / surfaceRect.width) * 100;
-            let newPercentY = (el.offsetTop / surfaceRect.height) * 100;
+            // If dropped back on surface, put it back in the container
+            readingSurfaceContent.appendChild(el);
+            el.style.position = 'absolute';
+            el.classList.remove('dragging');
             
+            // Reset transform (let CSS class handle rotation, we only handle scale via zoom)
+            el.style.transform = '';
+            
+            // Calculate new percentage position relative to zoomed content
+            const contentRect = readingSurfaceContent.getBoundingClientRect();
+            // The position relative to the *content container*
+            const relX = (coords.x - dragOffsetX - contentRect.left) / currentZoom;
+            const relY = (coords.y - dragOffsetY - contentRect.top) / currentZoom;
+            
+            // Convert to percentages based on the surface size (which defines 100%)
+            const surfaceRect = readingSurface.getBoundingClientRect();
+            let newPercentX = (relX / (contentRect.width / currentZoom)) * 100; 
+            // Note: content width/zoom = unscaled width. 
+            // If content is 100% of surface, this is (relX / surfaceWidth) * 100
+            
+            // Since our 'placed-card' CSS uses surface-relative sizing, let's use surface dimensions
+            newPercentX = (relX / (surfaceRect.width)) * 100;
+            let newPercentY = (relY / (surfaceRect.height)) * 100;
+
             const nearestSlot = findNearestSlot(newPercentX, newPercentY);
             if (nearestSlot) {
                 newPercentX = nearestSlot.position.percentX;
@@ -3307,11 +3363,24 @@ function addPlacedCardHandlers(el, card) {
             
             updateSpreadSlotsFilled();
             saveCurrentReading();
+        } else {
+            // If it was just a click (no move), we must put it back into the surface
+            // (since initDrag moved it to body)
+            if (el.parentElement === document.body) {
+                readingSurfaceContent.appendChild(el);
+                el.style.position = 'absolute';
+                el.style.transform = '';
+                el.classList.remove('dragging');
+                
+                // Restore original % positions
+                el.style.left = el.dataset.percentX + '%';
+                el.style.top = el.dataset.percentY + '%';
+            }
         }
         
-        // Click/tap action if quick and no movement
+        // Click action (Flip/Modal) - only if quick and didn't move
         const elapsed = Date.now() - mouseDownTime;
-        if (elapsed < HOLD_THRESHOLD && !hasMoved) {
+        if (elapsed < 150 && !hasMoved) {
             if (!el.classList.contains('flipped') && !el.classList.contains('flipping')) {
                 const willReverse = reversalsEnabled && Math.random() < 0.5;
                 el.classList.add('flipping');
@@ -3324,11 +3393,9 @@ function addPlacedCardHandlers(el, card) {
                     saveCurrentReading();
                 }, 600);
             } else if (el.classList.contains('flipped')) {
-                // Add lifting effect before showing modal
                 el.classList.add('lifting');
                 setTimeout(() => {
                     showCardModal(card, el.classList.contains('reversed'), el);
-                    // Remove lifting class after modal opens
                     setTimeout(() => {
                         el.classList.remove('lifting');
                     }, 100);
@@ -3355,6 +3422,9 @@ function addPlacedCardHandlers(el, card) {
     
     // Touch events
     el.addEventListener('touchstart', e => {
+        // Don't prevent default immediately to allow pinch-zoom? 
+        // No, card drag should override zoom.
+        // e.preventDefault(); // Optional: remove if blocking scroll is bad
         initDrag(getEventCoords(e));
         
         const onMove = e => handleMove(getEventCoords(e));
@@ -3365,9 +3435,9 @@ function addPlacedCardHandlers(el, card) {
             handleEnd(coords);
         };
         
-        document.addEventListener('touchmove', onMove);
+        document.addEventListener('touchmove', onMove, { passive: false });
         document.addEventListener('touchend', onEnd);
-    }, { passive: true });
+    }, { passive: false });
 }
 
 function returnCardToDeck(card, element) {
