@@ -350,6 +350,7 @@
         .placed-card.flipping {
             animation: cardFlip 0.6s ease-out forwards;
             z-index: 100;
+            transition: none; /* Disable transitions during animation */
         }
         .placed-card.flipping.will-reverse {
             animation: cardFlipReversed 0.6s ease-out forwards;
