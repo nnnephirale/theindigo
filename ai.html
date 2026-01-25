@@ -1438,7 +1438,8 @@
             background: hsl(var(--background));
             color: hsl(var(--foreground));
             min-height: 60px;
-            max-height: 120px;
+            max-height: 400px;
+            overflow-y: auto;
         }
         .ai-chat-input:focus {
             outline: none;
@@ -1826,6 +1827,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
+                </button>
+                <button class="btn btn-outline btn-sm" id="aiReadSpreadBtn" style="display: flex; align-items: center; gap: 0.25rem;">
+                    <svg class="icon" style="width: 14px; height: 14px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>Read This Spread (Beta)</span>
                 </button>
                 <button class="btn btn-default btn-sm" id="aiSendBtn">Send</button>
             </div>
@@ -6345,6 +6353,7 @@ const aiChatSidebar = document.getElementById('aiChatSidebar');
 const aiChatToggle = document.getElementById('aiChatToggle');
 const aiChatClose = document.getElementById('aiChatClose');
 const aiResetBtn = document.getElementById('aiResetBtn');
+const aiReadSpreadBtn = document.getElementById('aiReadSpreadBtn');
 const aiChatMessages = document.getElementById('aiChatMessages');
 const aiChatInput = document.getElementById('aiChatInput');
 const aiSendBtn = document.getElementById('aiSendBtn');
@@ -6486,8 +6495,9 @@ async function sendAIMessage(userMessage) {
     // Add user message to chat
     addUserMessage(userMessage);
 
-    // Clear input
+    // Clear input and reset height
     aiChatInput.value = '';
+    aiChatInput.style.height = '60px';
 
     // Show loading
     const loadingDiv = document.createElement('div');
@@ -6505,7 +6515,11 @@ async function sendAIMessage(userMessage) {
         const messages = [
             {
                 role: 'system',
-                content: `Read cards like you're texting a friend who asks what you think, not what they should do. Notice what stands out. Sit with it a second. 2-3 sentences per card unless something's really there. If no cards yet: "pull some first." Mix short and long sentences. Use contractions. Add a tangent if it fits. Pause between thoughts—let ideas breathe. Use "like" max once per response. No filler phrases ("it's important to note", "it's worth mentioning", "the key here is"). No binary setups ("it's not just X, it's Y"). No dramatic fragments with em-dashes before reveals. Avoid: infrastructure, signal, delve, weave, contain. Trust the reader to sit with what you're seeing. If it sounds quotable, rewrite it. Vary how paragraphs end—no pattern of punchy one-liners. CRITICAL: This is an ongoing conversation. Don't re-read the same cards from scratch on every message. Build on what you already said. Answer the actual follow-up question.`
+                content: `Read cards like you're a thoughtful friend exploring what you see together with the reader. Notice what stands out. Sit with it a second. Mix short and long sentences. Use contractions naturally. Pause between thoughts—let ideas breathe. Use "like" max once per response. No filler phrases ("it's important to note", "it's worth mentioning", "the key here is"). No binary setups ("it's not just X, it's Y"). No dramatic fragments with em-dashes before reveals. If it sounds quotable, rewrite it. Vary how paragraphs end—no pattern of punchy one-liners.
+
+CRITICAL - First reading vs follow-ups: On the FIRST reading of a spread, give 2-3 sentences per card, reading the whole spread. But on FOLLOW-UP questions, DO NOT re-read every card again. Instead: synthesize, focus on 1-2 most relevant cards, or paint a big-picture view without going card-by-card. You can also invite them to call out a specific card if they want to explore something deeper (e.g., "Happy to go deeper on any particular card if one's calling to you"). Keep follow-ups brief and targeted—don't overwhelm with another wall of text.
+
+This is an ongoing conversation. Build on what you already said. Answer the actual follow-up question directly. When you get a spread (especially 3+ cards) but lack context, acknowledge what you notice, then gently create space for them to share more if they want—something like "I'm seeing some interesting patterns here. If you want to tell me what this reading's about, I could offer more specific thoughts." Make it an invitation, not a demand. Once you know context, weave the cards into a cohesive story. Always italicize card names using markdown (*Card Name*). Never repeat yourself—rephrase completely if you need to reference something. Match the user's message length energy gradually—if they're writing long thoughtful messages, you can expand a bit. If they go short and terse, stay warm but keep it brief so it doesn't feel one-sided. Break longer responses into separate short paragraphs (2-4 sentences each) for easier reading. Stay conversational, warm, curious, and respectful of what can feel vulnerable.`
             }
         ];
 
@@ -6580,92 +6594,66 @@ function addUserMessage(message) {
     scrollChatToBottom();
 }
 
-// Add AI message to chat with progressive reveal
+// Add AI message to chat with typing animation and message chunking
 function addAIMessage(message) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'ai-message';
+    // Parse markdown italics: *text* -> <em>text</em>
+    function parseMarkdown(text) {
+        return text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    }
 
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'ai-message-content';
-    messageDiv.appendChild(contentDiv);
-    aiChatMessages.appendChild(messageDiv);
+    // Split message into paragraphs (chunks)
+    const paragraphs = message.split('\n\n').filter(p => p.trim().length > 0);
 
-    // Split into lines (treating \n\n as paragraph breaks)
-    const lines = message.split('\n');
-    let lineIndex = 0;
-    let wordIndex = 0;
-    let currentP = document.createElement('p');
-    contentDiv.appendChild(currentP);
+    let chunkIndex = 0;
+    const messageContainer = document.createElement('div');
+    messageContainer.className = 'ai-message';
+    aiChatMessages.appendChild(messageContainer);
 
-    function revealNext() {
-        if (lineIndex >= lines.length) return;
+    function showNextChunk() {
+        if (chunkIndex >= paragraphs.length) return;
 
-        const line = lines[lineIndex];
-
-        // If empty line, start new paragraph
-        if (line.trim() === '') {
-            if (currentP.textContent.trim() !== '') {
-                currentP = document.createElement('p');
-                contentDiv.appendChild(currentP);
-            }
-            lineIndex++;
-            wordIndex = 0;
-            setTimeout(revealNext, 50);
-            return;
-        }
-
-        const words = line.split(' ');
-
-        // First 3-5 lines: word by word reveal
-        if (lineIndex < 4) {
-            if (wordIndex < words.length) {
-                if (wordIndex > 0) currentP.textContent += ' ';
-                currentP.textContent += words[wordIndex];
-                wordIndex++;
-                scrollChatToBottom();
-                setTimeout(revealNext, 60); // word delay
-            } else {
-                // Line complete, add line break if not last
-                if (lineIndex < lines.length - 1 && lines[lineIndex + 1].trim() !== '') {
-                    currentP.appendChild(document.createElement('br'));
-                }
-                lineIndex++;
-                wordIndex = 0;
-                setTimeout(revealNext, 100); // pause between lines
-            }
-        }
-        // Lines 4-8: line by line reveal
-        else if (lineIndex < 8) {
-            currentP.textContent += (currentP.textContent && !currentP.textContent.endsWith('\n') ? ' ' : '') + line;
-            if (lineIndex < lines.length - 1 && lines[lineIndex + 1].trim() !== '') {
-                currentP.appendChild(document.createElement('br'));
-            }
-            lineIndex++;
-            wordIndex = 0;
+        // Show typing indicator for chunks after the first one
+        if (chunkIndex > 0 && paragraphs.length > 3) {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'ai-message-content';
+            typingDiv.style.opacity = '0.5';
+            typingDiv.innerHTML = '<p>...</p>';
+            messageContainer.appendChild(typingDiv);
             scrollChatToBottom();
-            setTimeout(revealNext, 200); // line delay
-        }
-        // Rest: dump all at once
-        else {
-            const remaining = lines.slice(lineIndex).join('\n');
-            const remainingPs = remaining.split('\n\n').filter(p => p.trim());
 
-            remainingPs.forEach((para, i) => {
-                if (i === 0 && currentP.textContent.trim() !== '') {
-                    currentP.appendChild(document.createElement('br'));
-                    currentP.textContent += para.replace(/\n/g, '\n');
-                } else {
-                    const p = document.createElement('p');
-                    p.innerHTML = escapeHtml(para).replace(/\n/g, '<br>');
-                    contentDiv.appendChild(p);
-                }
-            });
-            lineIndex = lines.length;
-            scrollChatToBottom();
+            // Wait 1-2 seconds, then remove typing indicator and show message
+            const delay = Math.min(800 + Math.random() * 400, 2000);
+            setTimeout(() => {
+                typingDiv.remove();
+                addChunk();
+            }, delay);
+        } else {
+            addChunk();
         }
     }
 
-    revealNext();
+    function addChunk() {
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'ai-message-content';
+
+        const para = paragraphs[chunkIndex];
+        const p = document.createElement('p');
+        // Parse markdown and preserve line breaks
+        p.innerHTML = parseMarkdown(escapeHtml(para)).replace(/\n/g, '<br>');
+        contentDiv.appendChild(p);
+
+        messageContainer.appendChild(contentDiv);
+        scrollChatToBottom();
+
+        chunkIndex++;
+
+        // Continue to next chunk
+        if (chunkIndex < paragraphs.length) {
+            setTimeout(showNextChunk, 100);
+        }
+    }
+
+    showNextChunk();
 }
 
 // Scroll chat to bottom
@@ -6701,8 +6689,12 @@ aiChatInput.addEventListener('keydown', (e) => {
 
 // Auto-resize textarea
 aiChatInput.addEventListener('input', () => {
-    aiChatInput.style.height = 'auto';
-    aiChatInput.style.height = Math.min(aiChatInput.scrollHeight, 120) + 'px';
+    if (aiChatInput.value.trim() === '') {
+        aiChatInput.style.height = '60px';
+    } else {
+        aiChatInput.style.height = 'auto';
+        aiChatInput.style.height = Math.min(aiChatInput.scrollHeight, 400) + 'px';
+    }
 });
 
 // Reset chat conversation
@@ -6717,6 +6709,85 @@ aiResetBtn.addEventListener('click', () => {
         showToast('Chat reset');
     }
 });
+
+// "Read my spread" quick-start button
+aiReadSpreadBtn.addEventListener('click', () => {
+    if (placedCards.length === 0) {
+        showToast('Draw some cards first');
+        return;
+    }
+
+    // Generate template and populate text box (don't send yet)
+    const template = generateReadSpreadTemplate();
+    aiChatInput.value = template;
+    aiChatInput.style.height = 'auto';
+    aiChatInput.style.height = Math.min(aiChatInput.scrollHeight, 400) + 'px';
+    aiChatInput.focus();
+});
+
+function generateReadSpreadTemplate() {
+    let template = 'help read this spread:\n';
+
+    // Get all cards in order they were placed
+    const spreadItems = [];
+
+    placedCards.forEach((p, index) => {
+        const reversedText = p.card.reversed ? ' (Reversed)' : '';
+
+        // Try to find matching text box nearby
+        let positionLabel = null;
+
+        if (textBoxes && textBoxes.length > 0) {
+            const cardRect = p.element.getBoundingClientRect();
+            const cardCenterX = cardRect.left + cardRect.width / 2;
+            const cardCenterY = cardRect.top + cardRect.height / 2;
+
+            let nearestTextBox = null;
+            let minDistance = Infinity;
+
+            textBoxes.forEach(tb => {
+                const tbRect = tb.element.getBoundingClientRect();
+                const tbCenterX = tbRect.left + tbRect.width / 2;
+                const tbCenterY = tbRect.top + tbRect.height / 2;
+                const distance = Math.sqrt(
+                    Math.pow(cardCenterX - tbCenterX, 2) +
+                    Math.pow(cardCenterY - tbCenterY, 2)
+                );
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestTextBox = tb;
+                }
+            });
+
+            if (nearestTextBox && minDistance < 300) { // Only match if reasonably close
+                const textarea = nearestTextBox.element.querySelector('.text-box-content');
+                const textContent = textarea ? textarea.value.trim() : '';
+                if (textContent) {
+                    // Use full text box content, preserving line breaks
+                    positionLabel = textContent;
+                }
+            }
+        }
+
+        // If no text box found, use position from spread or number
+        if (!positionLabel) {
+            positionLabel = p.card.position || `Position ${index + 1}`;
+        }
+
+        spreadItems.push({
+            position: positionLabel,
+            card: p.card.name + reversedText
+        });
+    });
+
+    // Format as numbered list with line breaks between cards
+    spreadItems.forEach((item, index) => {
+        template += `${index + 1}. ${item.position}\n${item.card}\n\n`;
+    });
+
+    return template;
+}
 
 function resetAIChat() {
     chatHistory = [];
