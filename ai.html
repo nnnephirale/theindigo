@@ -1800,7 +1800,10 @@
     <div class="ai-chat-sidebar" id="aiChatSidebar">
         <div class="ai-chat-header">
             <h3>AI Tarot Guide</h3>
-            <button class="ai-chat-close" id="aiChatClose">×</button>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-outline btn-sm" id="aiResetBtn" title="Reset conversation" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Reset</button>
+                <button class="ai-chat-close" id="aiChatClose">×</button>
+            </div>
         </div>
         <div class="ai-chat-messages" id="aiChatMessages">
             <div class="ai-message">
@@ -2478,7 +2481,8 @@ function saveCurrentReading() {
                 showBorder: tb.element.classList.contains('show-border')
             };
         }),
-        deckOrder: deck.map(c => c.id)
+        deckOrder: deck.map(c => c.id),
+        chatHistory: chatHistory || []
     };
     
     currentReadingId = reading.id;
@@ -2577,7 +2581,16 @@ function restoreReading(reading) {
     if (currentSpread) {
         renderSpreadSlots();
     }
-    
+
+    // Restore chat history if exists
+    if (reading.chatHistory && reading.chatHistory.length > 0) {
+        chatHistory = reading.chatHistory;
+        restoreAIChatDisplay();
+    } else {
+        chatHistory = [];
+        resetAIChat();
+    }
+
     renderDeck();
     updateDevPanel();
 }
@@ -2621,7 +2634,8 @@ function saveToHistory(title = '') {
                 showBorder: tb.element.classList.contains('show-border')
             };
         }),
-        deckOrder: deck.map(c => c.id)
+        deckOrder: deck.map(c => c.id),
+        chatHistory: chatHistory || []
     };
     
     try {
@@ -6230,12 +6244,15 @@ function renderHistoryList() {
         }).join('');
         
         const moreCards = cardCount > 5 ? `<div class="history-item-card">+${cardCount - 5}</div>` : '';
-        
+        const hasChatIcon = reading.chatHistory && reading.chatHistory.length > 0
+            ? `<svg class="icon" style="width: 14px; height: 14px; opacity: 0.6;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>`
+            : '';
+
         return `
             <div class="history-item" data-reading-id="${reading.id}">
                 <div class="history-item-title">${reading.title || 'Untitled Reading'}</div>
                 <div class="history-item-meta">
-                    <span>${dateStr} ${timeStr} · ${cardCount} card${cardCount !== 1 ? 's' : ''}</span>
+                    <span>${dateStr} ${timeStr} · ${cardCount} card${cardCount !== 1 ? 's' : ''} ${hasChatIcon}</span>
                     <button class="history-item-delete" data-delete-id="${reading.id}" title="Delete">
                         <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -6327,6 +6344,7 @@ let chatHistory = [];
 const aiChatSidebar = document.getElementById('aiChatSidebar');
 const aiChatToggle = document.getElementById('aiChatToggle');
 const aiChatClose = document.getElementById('aiChatClose');
+const aiResetBtn = document.getElementById('aiResetBtn');
 const aiChatMessages = document.getElementById('aiChatMessages');
 const aiChatInput = document.getElementById('aiChatInput');
 const aiSendBtn = document.getElementById('aiSendBtn');
@@ -6686,6 +6704,65 @@ aiChatInput.addEventListener('input', () => {
     aiChatInput.style.height = 'auto';
     aiChatInput.style.height = Math.min(aiChatInput.scrollHeight, 120) + 'px';
 });
+
+// Reset chat conversation
+aiResetBtn.addEventListener('click', () => {
+    if (chatHistory.length === 0) {
+        showToast('Chat is already empty');
+        return;
+    }
+
+    if (confirm('Reset this conversation? This will clear all chat history but keep your reading.')) {
+        resetAIChat();
+        showToast('Chat reset');
+    }
+});
+
+function resetAIChat() {
+    chatHistory = [];
+    aiChatMessages.innerHTML = `
+        <div class="ai-message">
+            <div class="ai-message-content">
+                <p>Chat reset. Ask me anything about your reading!</p>
+            </div>
+        </div>
+    `;
+}
+
+function restoreAIChatDisplay() {
+    aiChatMessages.innerHTML = '';
+
+    if (chatHistory.length === 0) {
+        resetAIChat();
+        return;
+    }
+
+    chatHistory.forEach(exchange => {
+        // Add user message
+        const userDiv = document.createElement('div');
+        userDiv.className = 'user-message';
+        userDiv.innerHTML = `
+            <div class="user-message-content">
+                <p>${escapeHtml(exchange.user)}</p>
+            </div>
+        `;
+        aiChatMessages.appendChild(userDiv);
+
+        // Add AI response
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'ai-message';
+        const paragraphs = exchange.assistant.split('\n\n').filter(p => p.trim().length > 0);
+        const paragraphsHtml = paragraphs.map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
+        aiDiv.innerHTML = `
+            <div class="ai-message-content">
+                ${paragraphsHtml}
+            </div>
+        `;
+        aiChatMessages.appendChild(aiDiv);
+    });
+
+    scrollChatToBottom();
+}
 
 init();
 </script></body></html>
