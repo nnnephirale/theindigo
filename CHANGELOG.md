@@ -307,6 +307,167 @@ Questions: Your best questions aren't clarifying, they're generative.
 
 ---
 
+## Additional Implementation Details
+
+### API Configuration Choices
+
+**Temperature: 0.7**
+- Sweet spot between creativity and consistency
+- Lower (0.1-0.4): Too robotic, repetitive phrasing
+- Higher (0.8-1.0): Too creative, less reliable for follow-ups
+- 0.7 allows natural variation while maintaining coherent conversation
+
+**Max Tokens: 1024**
+- Enough for thoughtful multi-card reading (typically 200-600 tokens)
+- Prevents overly long responses that overwhelm
+- Works with paragraph chunking to create natural breaks
+- Could increase to 2048 if users want deeper explorations
+
+**Model: llama-3.3-70b-versatile**
+- Groq's fastest large model (sub-second responses)
+- Good balance of speed and quality for conversational AI
+- Free tier generous enough for regular use
+- Alternatives considered: llama-3.1-8b (faster but less nuanced)
+
+### Reading History Limit: 50 Readings
+
+**Why 50?**
+- Balances localStorage size (~5-10MB for 50 readings with chat)
+- Keeps history panel scrollable without performance issues
+- Represents ~2-3 months of regular use
+- Old readings remain in git history if needed
+
+**Storage per reading:** ~100-200KB
+- Cards: ~10-50KB (depending on spread size)
+- Chat history: ~50-150KB (most of the space)
+- Text boxes: ~5-10KB
+- Total for 50: ~5-10MB (acceptable for localStorage)
+
+### "Read This Spread" Button Evolution
+
+**Initial Placement:** Right side, after settings
+**Problem:** Too hidden, users didn't notice it
+
+**Iteration 1:** Large button with `flex: 1`
+**Problem:** Dominated the interface, looked unbalanced
+
+**Final Placement:** Settings (left) → Read This Spread (middle) → Send (right)
+**Styling:**
+```css
+display: flex;
+align-items: center;
+gap: 0.25rem;
+/* No flex: 1 - natural button width */
+```
+**Icon:** Eye icon (👁️ / visibility symbol) - "read this spread"
+**Text:** "Read This Spread (Beta)" - proper capitalization, indicates experimental feature
+
+### Progressive Text Reveal Simplification
+
+**Original Implementation (Removed):**
+```javascript
+// First 3-4 lines: word-by-word (60ms per word)
+// Lines 4-8: line-by-line (200ms per line)
+// Rest: dump all at once
+```
+
+**Why Removed:**
+- Overly complex state management (lineIndex, wordIndex)
+- Unpredictable timing (varied wildly by response length)
+- Didn't match texting experience (too mechanical)
+- Made debugging harder
+
+**Current Implementation:**
+```javascript
+// Split by paragraphs (\n\n)
+// Show each paragraph as separate message bubble
+// Typing "..." between chunks (800-1200ms) for 4+ paragraphs
+```
+
+**Why Better:**
+- Simpler code (~30 lines vs ~80 lines)
+- Predictable behavior (one delay per paragraph)
+- Actually mimics texting (not typewriter effect)
+- Easy to adjust timing in one place
+
+### Chat Indicator Icon Details
+
+**Location:** Reading history panel, next to card count
+**Format:** SVG chat bubble icon (💬 equivalent)
+**Styling:**
+```css
+width: 14px;
+height: 14px;
+opacity: 0.6;  /* Subtle, not distracting */
+```
+
+**Conditional Display:**
+```javascript
+reading.chatHistory && reading.chatHistory.length > 0
+```
+- Only shows if chat conversation exists for that reading
+- Helps users quickly identify readings with discussion
+- Clicking reading loads both cards AND chat
+
+### Spatial Matching Algorithm Details
+
+**Why getBoundingClientRect()?**
+- Returns screen coordinates (viewport-relative)
+- Accounts for scroll position automatically
+- Works with responsive/scaled layouts
+- More accurate than `offsetLeft`/`offsetTop` (which are parent-relative)
+
+**Distance Calculation:**
+```javascript
+const distance = Math.sqrt(
+  Math.pow(cardCenterX - tbCenterX, 2) +
+  Math.pow(cardCenterY - tbCenterY, 2)
+);
+```
+- Standard Euclidean distance formula
+- Uses center points of elements (more accurate than edges)
+- 300px threshold chosen empirically (roughly 3-4 card widths)
+
+**Fallback Behavior:**
+- If no text box within 300px: uses spread position name
+- If no spread: uses "Position 1", "Position 2", etc.
+- Always produces valid output even with weird layouts
+
+### Chat Input Height Behavior
+
+**Three States:**
+1. **Empty:** 60px (CSS min-height)
+2. **Typing:** Auto-expands to content, max 400px
+3. **After Send:** Resets to 60px
+
+**Implementation:**
+```javascript
+// On input:
+if (value.trim() === '') {
+  height = '60px';
+} else {
+  height = Math.min(scrollHeight, 400) + 'px';
+}
+
+// After send:
+aiChatInput.value = '';
+aiChatInput.style.height = '60px';
+```
+
+**CSS Support:**
+```css
+max-height: 400px;
+overflow-y: auto;  /* Scroll if exceeds max */
+```
+
+**Why 400px max?**
+- About 10-12 lines of text
+- Enough for "Read This Spread" template (6-7 cards)
+- Doesn't cover entire chat area
+- User can scroll within input if needed
+
+---
+
 ## Future Considerations
 
 ### Potential Enhancements
