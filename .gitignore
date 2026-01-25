@@ -19,8 +19,7 @@ Thumbs.db
 # Node modules (if you add backend later)
 node_modules/
 
-# Exclude all HTML files except index.html, ai.html, and ai2.html
+# Exclude all HTML files except index.html and ai.html
 *.html
 !index.html
 !ai.html
-!ai2.html
