@@ -6483,17 +6483,28 @@ async function sendAIMessage(userMessage) {
         const context = gatherReadingContext();
         const contextPrompt = formatContextForAI(context);
 
-        // Build messages for API
+        // Build messages for API with conversation history
         const messages = [
             {
                 role: 'system',
-                content: `You are an expert tarot reader and spiritual guide. You provide insightful, thoughtful, and compassionate interpretations of tarot readings. When interpreting cards, consider their traditional meanings, their positions in spreads, and how they interact with each other. Be warm, supportive, and helpful in your guidance. If asked about cards not yet drawn, gently remind the user to draw cards first.`
-            },
-            {
-                role: 'user',
-                content: contextPrompt + 'User question: ' + userMessage
+                content: `Read cards like you're texting a friend who asks what you think, not what they should do. Notice what stands out. Sit with it a second. 2-3 sentences per card unless something's really there. If no cards yet: "pull some first." Mix short and long sentences. Use contractions. Add a tangent if it fits. Pause between thoughts—let ideas breathe. Use "like" max once per response. No filler phrases ("it's important to note", "it's worth mentioning", "the key here is"). No binary setups ("it's not just X, it's Y"). No dramatic fragments with em-dashes before reveals. Avoid: infrastructure, signal, delve, weave, contain. Trust the reader to sit with what you're seeing. If it sounds quotable, rewrite it. Vary how paragraphs end—no pattern of punchy one-liners. CRITICAL: This is an ongoing conversation. Don't re-read the same cards from scratch on every message. Build on what you already said. Answer the actual follow-up question.`
             }
         ];
+
+        // Add conversation history (last 6 exchanges to keep context manageable)
+        const recentHistory = chatHistory.slice(-6);
+        recentHistory.forEach(exchange => {
+            messages.push(
+                { role: 'user', content: exchange.user },
+                { role: 'assistant', content: exchange.assistant }
+            );
+        });
+
+        // Add current context and user message
+        messages.push({
+            role: 'user',
+            content: contextPrompt + 'User question: ' + userMessage
+        });
 
         // Call Groq API
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -6551,22 +6562,92 @@ function addUserMessage(message) {
     scrollChatToBottom();
 }
 
-// Add AI message to chat
+// Add AI message to chat with progressive reveal
 function addAIMessage(message) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'ai-message';
 
-    // Split message into paragraphs
-    const paragraphs = message.split('\n\n').filter(p => p.trim().length > 0);
-    const paragraphsHtml = paragraphs.map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
-
-    messageDiv.innerHTML = `
-        <div class="ai-message-content">
-            ${paragraphsHtml}
-        </div>
-    `;
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'ai-message-content';
+    messageDiv.appendChild(contentDiv);
     aiChatMessages.appendChild(messageDiv);
-    scrollChatToBottom();
+
+    // Split into lines (treating \n\n as paragraph breaks)
+    const lines = message.split('\n');
+    let lineIndex = 0;
+    let wordIndex = 0;
+    let currentP = document.createElement('p');
+    contentDiv.appendChild(currentP);
+
+    function revealNext() {
+        if (lineIndex >= lines.length) return;
+
+        const line = lines[lineIndex];
+
+        // If empty line, start new paragraph
+        if (line.trim() === '') {
+            if (currentP.textContent.trim() !== '') {
+                currentP = document.createElement('p');
+                contentDiv.appendChild(currentP);
+            }
+            lineIndex++;
+            wordIndex = 0;
+            setTimeout(revealNext, 50);
+            return;
+        }
+
+        const words = line.split(' ');
+
+        // First 3-5 lines: word by word reveal
+        if (lineIndex < 4) {
+            if (wordIndex < words.length) {
+                if (wordIndex > 0) currentP.textContent += ' ';
+                currentP.textContent += words[wordIndex];
+                wordIndex++;
+                scrollChatToBottom();
+                setTimeout(revealNext, 60); // word delay
+            } else {
+                // Line complete, add line break if not last
+                if (lineIndex < lines.length - 1 && lines[lineIndex + 1].trim() !== '') {
+                    currentP.appendChild(document.createElement('br'));
+                }
+                lineIndex++;
+                wordIndex = 0;
+                setTimeout(revealNext, 100); // pause between lines
+            }
+        }
+        // Lines 4-8: line by line reveal
+        else if (lineIndex < 8) {
+            currentP.textContent += (currentP.textContent && !currentP.textContent.endsWith('\n') ? ' ' : '') + line;
+            if (lineIndex < lines.length - 1 && lines[lineIndex + 1].trim() !== '') {
+                currentP.appendChild(document.createElement('br'));
+            }
+            lineIndex++;
+            wordIndex = 0;
+            scrollChatToBottom();
+            setTimeout(revealNext, 200); // line delay
+        }
+        // Rest: dump all at once
+        else {
+            const remaining = lines.slice(lineIndex).join('\n');
+            const remainingPs = remaining.split('\n\n').filter(p => p.trim());
+
+            remainingPs.forEach((para, i) => {
+                if (i === 0 && currentP.textContent.trim() !== '') {
+                    currentP.appendChild(document.createElement('br'));
+                    currentP.textContent += para.replace(/\n/g, '\n');
+                } else {
+                    const p = document.createElement('p');
+                    p.innerHTML = escapeHtml(para).replace(/\n/g, '<br>');
+                    contentDiv.appendChild(p);
+                }
+            });
+            lineIndex = lines.length;
+            scrollChatToBottom();
+        }
+    }
+
+    revealNext();
 }
 
 // Scroll chat to bottom
