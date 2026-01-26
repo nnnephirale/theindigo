@@ -23,3 +23,7 @@ node_modules/
 *.html
 !index.html
 !ai.html
+
+# Include modular-test folder
+!modular-test/
+!modular-test/**

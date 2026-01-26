@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tarot Reader (Dev)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="ai.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-left">
+                <button class="menu-btn" id="menuBtn" title="Menu">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <h1>Tarot Reader</h1>
+                <div class="toggle-group">
+                    <span class="toggle-label">Dev</span>
+                    <div class="toggle" id="devToggle"></div>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="btn btn-outline" id="saveBtn" title="Save Reading">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    <span>Save Reading</span>
+                </button>
+                <button class="btn btn-outline" id="historyBtn" title="Reading History">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Reading History</span>
+                </button>
+                <button class="btn btn-outline" id="aiChatToggle" title="AI Chat">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    <span>AI Chat</span>
+                </button>
+                <button class="btn btn-outline" id="themeToggle" title="Toggle theme">
+                    <svg class="icon" id="themeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Mobile Menu Dropdown -->
+            <div class="mobile-menu" id="mobileMenu">
+                <button class="mobile-menu-item" id="mobileShuffleBtn">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 17h2.735a4 4 0 003.43-1.94l3.67-6.12A4 4 0 0116.265 7H21m0 0l-3-3m3 3l-3 3M3 7h2.735a4 4 0 013.43 1.94l.5.83m6.07 4.29l.5.83A4 4 0 0016.265 17H21m0 0l-3-3m3 3l-3 3" />
+                    </svg>
+                    <span>Shuffle</span>
+                </button>
+                <button class="mobile-menu-item" id="mobileResetBtn">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                    </svg>
+                    <span>Reset</span>
+                </button>
+                <button class="mobile-menu-item" id="mobileReversalsBtn">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                    <span>Reversals</span>
+                </button>
+                <button class="mobile-menu-item" id="mobileSpreadBtn">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <rect x="2" y="3" width="5" height="8" rx="1" />
+                        <rect x="9.5" y="3" width="5" height="8" rx="1" />
+                        <rect x="17" y="3" width="5" height="8" rx="1" />
+                        <rect x="5.75" y="13" width="5" height="8" rx="1" />
+                        <rect x="13.25" y="13" width="5" height="8" rx="1" />
+                    </svg>
+                    <span>Pick a Spread</span>
+                </button>
+            </div>
+        </header>
+        <main>
+            <div class="reading-surface" id="readingSurface">
+                <div class="surface-tools">
+                    <button class="btn btn-outline text-tool-btn" id="textToolBtn" title="Text Tool (Aa)">
+                        <span class="text-tool-label">Aa</span>
+                    </button>
+                    <button class="btn btn-outline zoom-btn" id="zoomInBtn" title="Zoom In">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+                        </svg>
+                    </button>
+                    <button class="btn btn-outline zoom-btn" id="zoomOutBtn" title="Zoom Out">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="spread-reference" id="spreadReference">
+                    <div class="spread-reference-header" id="spreadRefHeader">
+                        <span class="spread-reference-title" id="spreadRefTitle">Spread</span>
+                        <div class="spread-reference-toggle">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="spread-reference-content" id="spreadRefContent">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                <div class="reading-surface-content" id="readingSurfaceContent"></div>
+            </div>
+            <div class="deck-area">
+                <div class="deck-container" id="deckContainer"></div>
+            </div>
+            <div class="deck-controls">
+                <button class="btn btn-outline" id="shuffleBtn" title="Shuffle">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 17h2.735a4 4 0 003.43-1.94l3.67-6.12A4 4 0 0116.265 7H21m0 0l-3-3m3 3l-3 3M3 7h2.735a4 4 0 013.43 1.94l.5.83m6.07 4.29l.5.83A4 4 0 0016.265 17H21m0 0l-3-3m3 3l-3 3" />
+                    </svg>
+                </button>
+                <button class="btn btn-outline" id="resetBtn" title="Return Cards">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                    </svg>
+                </button>
+                <button class="btn btn-outline toggle-btn" id="reversalsToggle" title="Reversals">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                    <span>Reversals</span>
+                </button>
+                <button class="btn btn-outline" id="spreadBtn" title="Pick a Spread">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <rect x="2" y="3" width="5" height="8" rx="1" />
+                        <rect x="9.5" y="3" width="5" height="8" rx="1" />
+                        <rect x="17" y="3" width="5" height="8" rx="1" />
+                        <rect x="5.75" y="13" width="5" height="8" rx="1" />
+                        <rect x="13.25" y="13" width="5" height="8" rx="1" />
+                    </svg>
+                    <span>Pick a Spread</span>
+                </button>
+            </div>
+            <p class="instructions">Drag cards to the reading surface · Click to reveal</p>
+        </main>
+    </div>
+    <div class="card-modal" id="cardModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">×</button>
+            <div class="modal-position-title" id="modalPositionTitle" style="display: none;"></div>
+            <div class="modal-card" id="modalCard"></div>
+            <h2 class="modal-title" id="modalTitle"></h2>
+            <p class="modal-subtitle" id="modalSubtitle"></p>
+            <div class="modal-meanings" id="modalMeanings">
+                <button class="meanings-toggle" id="meaningsToggle">
+                    <span>Meanings</span>
+                    <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div class="meanings-content" id="meaningsContent">
+                    <div class="keywords-section">
+                        <div class="keywords-upright">
+                            <span class="keywords-label">Upright</span>
+                            <span class="keywords-list" id="keywordsUpright"></span>
+                        </div>
+                        <div class="keywords-reversed">
+                            <span class="keywords-label">Reversed</span>
+                            <span class="keywords-list" id="keywordsReversed"></span>
+                        </div>
+                    </div>
+                    <div class="meaning-text" id="meaningText"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dev-panel">
+        <h3>Deck Validation</h3>
+        <div class="dev-info" id="devInfo"></div>
+        <div class="validation-status" id="validationStatus"></div>
+    </div>
+    
+    <!-- Save Modal -->
+    <div class="save-modal" id="saveModal">
+        <div class="save-modal-content">
+            <h3>Save Reading</h3>
+            <div class="save-existing-info" id="saveExistingInfo">
+                <p class="save-existing-label">This reading was previously saved as:</p>
+                <p class="save-existing-title" id="saveExistingTitle"></p>
+                <p class="save-existing-date" id="saveExistingDate"></p>
+            </div>
+            <input type="text" id="readingTitleInput" placeholder="Enter a title (optional)" maxlength="100">
+            <div class="save-modal-buttons">
+                <button class="btn btn-outline" id="saveCancelBtn">Cancel</button>
+                <button class="btn btn-outline" id="saveNewBtn">Save as New</button>
+                <button class="btn btn-default" id="saveConfirmBtn">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- History Panel -->
+    <div class="history-panel" id="historyPanel">
+        <div class="history-header">
+            <h3>Reading History</h3>
+            <button class="btn btn-ghost history-close" id="historyClose">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="history-list" id="historyList">
+            <!-- Populated by JS -->
+        </div>
+        <div class="history-empty" id="historyEmpty">
+            <p>No saved readings yet</p>
+        </div>
+        <div class="history-footer">
+            <button class="btn btn-ghost btn-danger" id="clearHistoryBtn">Clear All History</button>
+        </div>
+    </div>
+    <div class="history-overlay" id="historyOverlay"></div>
+    
+    <!-- Spread Panel -->
+    <div class="spread-panel" id="spreadPanel">
+        <!-- Spread List View -->
+        <div class="spread-list-view" id="spreadListView">
+            <div class="spread-panel-header">
+                <h3>Pick a Spread</h3>
+                <button class="btn btn-ghost spread-panel-close" id="spreadPanelClose">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="spread-list" id="spreadList">
+                <!-- Populated by JS -->
+            </div>
+            <div class="spread-panel-footer">
+                <button class="btn btn-outline" id="clearSpreadBtn">Clear Spread</button>
+            </div>
+        </div>
+        
+        <!-- Spread Detail View -->
+        <div class="spread-detail" id="spreadDetailView">
+            <div class="spread-detail-header">
+                <button class="spread-detail-back" id="spreadDetailBack">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h3 class="spread-detail-title" id="spreadDetailTitle">Spread Name</h3>
+            </div>
+            <div class="spread-detail-content" id="spreadDetailContent">
+                <!-- Populated by JS -->
+            </div>
+            <div class="spread-detail-footer">
+                <button class="btn btn-outline" id="useSpreadBtn">Use Spread</button>
+            </div>
+        </div>
+    </div>
+    <div class="spread-overlay" id="spreadOverlay"></div>
+
+    <!-- AI Chat Sidebar -->
+    <div class="ai-chat-sidebar" id="aiChatSidebar">
+        <div class="ai-chat-header">
+            <h3>AI Tarot Guide</h3>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-outline btn-sm" id="aiResetBtn" title="Reset conversation" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Reset</button>
+                <button class="ai-chat-close" id="aiChatClose">×</button>
+            </div>
+        </div>
+        <div class="ai-chat-messages" id="aiChatMessages">
+            <div class="ai-message">
+                <div class="ai-message-content">
+                    <p>Hello! I'm your AI tarot guide. I can help interpret your tarot readings based on the cards you've drawn and any notes you've taken.</p>
+                    <p>To get started, you'll need to add your Groq API key. Click the settings button below.</p>
+                </div>
+            </div>
+        </div>
+        <div class="ai-chat-input-area">
+            <textarea
+                class="ai-chat-input"
+                id="aiChatInput"
+                placeholder="Ask about your reading..."
+                rows="2"
+            ></textarea>
+            <div class="ai-chat-actions">
+                <button class="btn btn-outline btn-sm" id="aiSettingsBtn" title="API Settings">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </button>
+                <button class="btn btn-outline btn-sm" id="aiReadSpreadBtn" style="display: flex; align-items: center; gap: 0.25rem;">
+                    <svg class="icon" style="width: 14px; height: 14px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>Read This Spread (Beta)</span>
+                </button>
+                <button class="btn btn-default btn-sm" id="aiSendBtn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Settings Modal -->
+    <div class="ai-settings-modal" id="aiSettingsModal">
+        <div class="ai-settings-content">
+            <h3>AI Settings</h3>
+            <p class="ai-settings-description">Enter your Groq API key to enable AI chat. Get a free API key at <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a></p>
+            <input
+                type="password"
+                id="groqApiKeyInput"
+                placeholder="Enter your Groq API key"
+                class="ai-settings-input"
+            >
+            <div class="ai-settings-status" id="aiSettingsStatus"></div>
+            <div class="ai-settings-buttons">
+                <button class="btn btn-outline" id="aiSettingsCancelBtn">Cancel</button>
+                <button class="btn btn-default" id="aiSettingsSaveBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script src="ai.js"></script>
+</body></html>

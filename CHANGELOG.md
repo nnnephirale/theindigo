@@ -1,19 +1,29 @@
 # Tarot Reader - Changelog & Development Log
 
 **Project:** AI Tarot Reading Web App
-**Main File:** `ai.html`
-**Last Updated:** January 25, 2026
+**Main Files:** `ai.html` (legacy) | `modular-test/ai-dev.html` (active development)
+**Last Updated:** January 26, 2026
 
 ---
 
 ## Current Code Structure
 
-### Main Application (`ai.html`)
-Single-file HTML/CSS/JavaScript application with:
+### Development Structure
+
+**Primary Development:** `/modular-test/` folder
+- `ai-dev.html` - HTML structure (19KB)
+- `ai.css` - Styles (63KB, 1,534 lines)
+- `ai.js` - Logic (192KB, 4,987 lines)
+- `README.md` - Testing guide
+
+**Legacy:** `ai.html` - Single-file version (280KB, maintained for reference)
+
+### Main Application
+Modular HTML/CSS/JavaScript application with:
 
 **Core Systems:**
 - **Tarot Deck System** - 78-card Rider-Waite-Smith deck with image loading from steve-p.org
-- **Spread Layouts** - Preset spreads (Single, 3-Card, Celtic Cross, Tree of Life, 5-Card Elements) + custom spread creation via text boxes
+- **Spread Layouts** - Preset spreads (Three Card, Spirit Spread, Tree of Life) + custom spread creation via text boxes
 - **Card Placement** - Drag-and-drop with percentage-based positioning for responsive layout
 - **Reading Surface** - Canvas for card placement with text annotation support
 - **LocalStorage Persistence** - Saves current reading, reading history (last 50), and chat history with each saved reading
@@ -22,7 +32,8 @@ Single-file HTML/CSS/JavaScript application with:
 - **Groq API** - Uses Llama-3.3-70b-versatile model
 - **Chat Interface** - Sidebar panel with conversation history (last 6 exchanges retained in context)
 - **Progressive Text Reveal** - Markdown parsing with italic support, paragraph chunking, typing delays
-- **Context Gathering** - Reads cards, spread info, and text box notes to provide context to AI
+- **Context Gathering** - Reads cards, spread info (with full descriptions and position meanings), and text box notes to provide context to AI
+- **Spread Recognition** - Sends detailed spread descriptions and position meanings to AI for consistent interpretation quality
 
 **Key Functions:**
 - `gatherReadingContext()` - Collects cards, notes, spread info for AI
@@ -468,6 +479,109 @@ overflow-y: auto;  /* Scroll if exceeds max */
 
 ---
 
+## Recent Updates (January 26, 2026)
+
+### 10. Modular File Structure ✅
+**Goal:** Improve development efficiency and reduce token consumption when editing
+
+**Implementation:**
+- Created `/modular-test/` folder with separated concerns:
+  - `ai-dev.html` - HTML structure only (19KB)
+  - `ai.css` - All styles (63KB, 1,534 lines)
+  - `ai.js` - All JavaScript logic (192KB, 4,987 lines)
+  - `README.md` - Documentation and testing guide
+
+**Benefits:**
+- **Token Savings:** 77% when editing styles, 30% when editing JavaScript
+- **Better Organization:** Each file has single responsibility
+- **Easier Debugging:** Can focus on one aspect at a time
+- **No Build Process:** Files linked directly, no compilation needed
+
+**Workflow:**
+- Primary development now happens in `/modular-test/` files
+- `ai.html` remains as legacy/reference
+- Changes to modular files take effect immediately (just refresh browser)
+
+### 11. Removed Single Card Spread ✅
+**Reasoning:** Simplified spread selection, focused on multi-card readings
+
+**Changes:**
+- Removed `single` spread from SPREADS object
+- "Pick a Spread" menu now shows only:
+  - Three Card (Past/Present/Future)
+  - The Spirit Spread (5-card elemental cross)
+  - Tree of Life (11-card Kabbalistic spread)
+
+**Impact:** Users can still do single-card readings by placing one card without selecting a spread
+
+### 12. Enhanced AI Spread Recognition ✅
+**Problem:** AI didn't consistently recognize preloaded spread structures, resulting in inconsistent reading quality between "Read This Spread" vs manual requests
+
+**Solution:**
+Enhanced `formatContextForAI()` function to include:
+- Full spread name
+- Detailed description (uses `detailedDescription` field if available, otherwise `description`)
+- All position meanings with exact interpretations
+- For Spirit Spread: Detailed elemental information (Earth/Air/Fire/Water/Spirit)
+- For Tree of Life: Rachel Mann's spread with all 11 position meanings
+- For Three Card: Past/Present/Future with position prompts
+
+**Technical Implementation:**
+```javascript
+// Now sends to Groq API:
+Spread: The Spirit Spread
+
+The Spirit Spread is a popular and useful spread among many tarot readers...
+[Full detailed description]
+
+Position Meanings:
+Earth: This card represents the physical and material qualities...
+Air: This card represents the mental aspects...
+Fire: This card represents the strength of character...
+Water: This card represents the emotional characteristics...
+Spirit: This card provides archetypal information...
+```
+
+**Impact:**
+- Consistent reading quality regardless of how user triggers the reading
+- AI understands spread context even without "Read This Spread" template
+- Position meanings inform interpretation without needing to re-explain
+- Blank messages or "please read this spread" now work as well as the template
+
+**Files Modified:**
+- `ai.html` (line 6445-6493)
+- `modular-test/ai.js` (line 4582-4629)
+
+### 13. Fixed Spread Position Matching ✅
+**Problem:** Tree of Life and other complex spreads had cards mismatched to wrong position names (e.g., card in "Force" position being read as "Spirit")
+
+**Root Cause:** Cards snapped to spread slots based on coordinates, but the position name wasn't being stored or passed to the AI
+
+**Solution:**
+When cards snap to spread slots, store the position name as a data attribute:
+```javascript
+// When card snaps to slot (3 locations in code):
+el.dataset.positionName = nearestSlot.position.name;
+
+// When gathering context for AI:
+const position = p.element.dataset.positionName || p.card.position || null;
+```
+
+**Impact:**
+- All preloaded spreads now correctly match cards to position names
+- Three Card: Past, Present, Future
+- Spirit Spread: Earth, Air, Fire, Water, Spirit
+- Tree of Life: All 11 positions (Spirit, Form, Force, Da'at, Against, For, Advice, Thoughts, Feelings, Persona, World)
+- Custom spreads (no template) still use flexible text box spatial matching
+
+**Known Edge Case:**
+Cards placed on spreads BEFORE this fix won't have position names stored. Only affects existing saved readings. Solution: Reset and re-lay the spread for correct position matching. Not pursuing further as it only affects legacy data.
+
+**Files Modified:**
+- `modular-test/ai.js` (lines ~1870, ~2027, ~3404, ~4561, ~4582)
+
+---
+
 ## Future Considerations
 
 ### Potential Enhancements
@@ -480,11 +594,12 @@ overflow-y: auto;  /* Scroll if exceeds max */
 - **Journal Mode:** Dedicated space for reflection notes separate from chat
 
 ### Code Quality
-- **Extract Components:** Break ai.html into logical modules if it grows further
+- ✅ **Extract Components:** COMPLETED - Modular structure implemented in `/modular-test/`
 - **Error Handling:** More graceful API failure handling
 - **Accessibility:** ARIA labels, keyboard navigation improvements
 - **Testing:** Consider unit tests for core functions
 - **Performance:** Lazy load card images, optimize for large reading histories
+- **Sync to Production:** Mechanism to sync modular changes back to `ai.html` if needed
 
 ### AI Integration
 - **Model Options:** Allow switching between Groq models (speed vs quality)
