@@ -660,7 +660,7 @@
             width: 100%;
             height: 100%;
             background-color: #4a7c9b;
-            background-image: url('https://steve-p.org/cards/small/sm_RWSa-X-RL.webp');
+            background-image: url('../cardimages/riderwaite/cardbacking.webp');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -756,7 +756,7 @@
             /* Remove box-shadow to prevent iOS 3D rendering issues */
         }
         .card-back {
-            background: url('https://steve-p.org/cards/small/sm_RWSa-X-RL.webp') center/cover;
+            background: url('../cardimages/riderwaite/cardbacking.webp') center/cover;
             display: flex;
             align-items: center; justify-content: center;
             border: 1px solid hsl(var(--border));

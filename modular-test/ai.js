@@ -4,7 +4,9 @@
 const USE_IMAGES = true;
 
 function getCardImageUrl(card) {
-    const baseUrl = 'https://steve-p.org/cards/small/sm_RWSa-';
+    // Resolve path relative to HTML document (root ai.html vs modular-test/ai-dev.html)
+    const prefix = window.location.pathname.includes('/modular-test/') ? '../' : '';
+    const baseUrl = prefix + 'cardimages/riderwaite/sm_RWSa-';
     
     if (card.arcana === 'Major') {
         // Major Arcana: T-00 to T-21
