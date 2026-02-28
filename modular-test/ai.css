@@ -1594,6 +1594,7 @@
                 align-items: flex-end;
                 gap: 0.5rem;
                 padding: 0.5rem;
+                padding-bottom: 1.25rem;
                 border-radius: 0 0 0.75rem 0.75rem;
             }
             .ai-chat-input {
