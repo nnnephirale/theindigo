@@ -4559,7 +4559,8 @@ function gatherReadingContext() {
     if (placedCards && placedCards.length > 0) {
         context.cards = placedCards.map(p => {
             const cardName = p.card.name;
-            const isReversed = p.card.reversed;
+            // Read reversed state from element (CSS class or data attribute), not card data
+            const isReversed = p.element.classList.contains('reversed') || p.element.dataset.reversed === 'true';
             // Read position name from element data attribute (set when snapped to spread slot)
             const position = p.element.dataset.positionName || p.card.position || null;
 
@@ -4847,6 +4848,38 @@ aiSendBtn.addEventListener('click', () => {
     }
 });
 
+// Mobile send button
+const aiMobileSendBtn = document.getElementById('aiMobileSendBtn');
+if (aiMobileSendBtn) {
+    aiMobileSendBtn.addEventListener('click', () => {
+        const message = aiChatInput.value.trim();
+        if (message) {
+            sendAIMessage(message);
+        }
+    });
+}
+
+// On mobile, move settings & read-spread buttons into the header
+(function setupMobileChatLayout() {
+    const mobileActionsContainer = document.getElementById('aiHeaderMobileActions');
+    if (!mobileActionsContainer) return;
+    const mq = window.matchMedia('(max-width: 600px)');
+    const actionsRow = document.querySelector('.ai-chat-actions');
+    function handleMobile(e) {
+        if (e.matches) {
+            // Move settings and read-spread to header
+            mobileActionsContainer.appendChild(aiSettingsBtn);
+            mobileActionsContainer.appendChild(aiReadSpreadBtn);
+        } else {
+            // Move them back to the actions row (before send btn)
+            actionsRow.insertBefore(aiSettingsBtn, aiSendBtn);
+            actionsRow.insertBefore(aiReadSpreadBtn, aiSendBtn);
+        }
+    }
+    mq.addEventListener('change', handleMobile);
+    handleMobile(mq);
+})();
+
 // Enter key to send (Shift+Enter for new line)
 aiChatInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -4903,7 +4936,8 @@ function generateReadSpreadTemplate() {
     const spreadItems = [];
 
     placedCards.forEach((p, index) => {
-        const reversedText = p.card.reversed ? ' (Reversed)' : '';
+        const isReversed = p.element.classList.contains('reversed') || p.element.dataset.reversed === 'true';
+        const reversedText = isReversed ? ' (Reversed)' : '';
 
         // Try to find matching text box nearby
         let positionLabel = null;

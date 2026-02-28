@@ -266,7 +266,8 @@
     <div class="ai-chat-sidebar" id="aiChatSidebar">
         <div class="ai-chat-header">
             <h3>AI Tarot Guide</h3>
-            <div style="display: flex; gap: 0.5rem;">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <div class="ai-chat-header-mobile-actions" id="aiHeaderMobileActions"></div>
                 <button class="btn btn-outline btn-sm" id="aiResetBtn" title="Reset conversation" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Reset</button>
                 <button class="ai-chat-close" id="aiChatClose">×</button>
             </div>
@@ -302,6 +303,11 @@
                 </button>
                 <button class="btn btn-default btn-sm" id="aiSendBtn">Send</button>
             </div>
+            <button class="ai-mobile-send" id="aiMobileSendBtn" title="Send">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-7 7m7-7l7 7" />
+                </svg>
+            </button>
         </div>
     </div>
 
