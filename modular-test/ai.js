@@ -1893,10 +1893,10 @@ function placeCard(card, x, y) {
     readingSurfaceContent.appendChild(el);
     placedCards.push({ card, element: el });
     
-    // Hide "Drag cards here" text and dock the deck after first card
+    // Hide "Place cards here" text and dock the deck after first card
     readingSurface.classList.add('has-cards');
     document.querySelector('.deck-area').classList.add('docked');
-    
+
     // Update spread slots filled state
     updateSpreadSlotsFilled();
     clearSlotHighlights();
@@ -2270,6 +2270,256 @@ shuffleBtn.addEventListener('click', () => {
         shuffleBtn.disabled = false;
     }, 1500);
 });
+
+// ============================================
+// ONBOARDING CTA — Flowing Shuffle Animation
+// ============================================
+(function initOnboarding() {
+    const onboardingCta = document.getElementById('onboardingCta');
+    const onboardingBtn = document.getElementById('onboardingShuffleBtn');
+    const onboardingHint = document.getElementById('onboardingHint');
+    if (!onboardingCta || !onboardingBtn) return;
+
+    let onboardingState = 'initial'; // 'initial' | 'shuffling' | 'settling' | 'ready' | 'dismissed'
+    let animFrame = null;
+    let animStart = 0;
+    let settleStart = 0;
+    const SETTLE_DURATION = 900; // ms to ease cards back to deck
+
+    // Store each card's "home" transform so we can return to it
+    let cardHomes = [];
+    const VISUAL_CARD_COUNT = window.PILL_VISUAL_CARD_COUNT || 26; // Overridable for pill UI
+    let flowCards = [];   // Subset that animates
+    let hiddenCards = []; // The rest, hidden during flow
+
+    function getCards() {
+        return Array.from(deckContainer.querySelectorAll('.card'));
+    }
+
+    function captureHomes(cards) {
+        cardHomes = cards.map(c => ({
+            el: c,
+            home: c.style.transform,
+            zIndex: c.style.zIndex
+        }));
+    }
+
+    // ── Parametric flowing path ──
+    // A lemniscate (∞ / figure-8) with breathing radius, vertical drift,
+    // and per-card phase offset — creates a continuous river of cards.
+    function flowPosition(t, i, total) {
+        const phase = t * 0.8 + (i / total) * Math.PI * 2; // stagger cards along loop
+
+        // Breathing envelope — radius slowly pulses
+        const breathe = 1 + 0.18 * Math.sin(t * 0.35);
+
+        // Lemniscate of Bernoulli (figure-8)
+        const denom = 1 + Math.sin(phase) * Math.sin(phase) * 0.6;
+        const rx = (isMobileView() ? 110 : 200) * breathe;
+        const ry = (isMobileView() ? 35 : 55) * breathe;
+        const x = rx * Math.cos(phase) / denom;
+        const y = ry * Math.sin(phase) * Math.cos(phase) / denom;
+
+        // Gentle vertical drift — the whole figure bobs slowly
+        const drift = 8 * Math.sin(t * 0.25);
+
+        // Per-card rotation follows the tangent direction + gentle wobble
+        const rot = 18 * Math.sin(phase + 0.3) + 5 * Math.sin(t * 0.6 + i);
+
+        // Subtle scale pulse per card
+        const s = 1 + 0.04 * Math.sin(phase * 1.3 + i * 0.5);
+
+        return { x, y: y + drift, rot, scale: s };
+    }
+
+    // ── Ease-in: smoothly lift cards from their home into the flow ──
+    // Returns 0→1 over the first ~1.2s
+    function entryEase(elapsed) {
+        const dur = 1200;
+        if (elapsed >= dur) return 1;
+        const p = elapsed / dur;
+        // Cubic ease-out
+        return 1 - Math.pow(1 - p, 3);
+    }
+
+    // ── Main animation loop ──
+    function animateFlow(timestamp) {
+        if (!animStart) animStart = timestamp;
+        const elapsed = timestamp - animStart;
+        const t = elapsed * 0.001; // seconds
+        const ease = entryEase(elapsed);
+        const total = flowCards.length || 1;
+
+        flowCards.forEach((card, i) => {
+            const { x, y, rot, scale } = flowPosition(t, i, total);
+
+            // Blend from home position (ease=0) to flow position (ease=1)
+            const tx = x * ease;
+            const ty = y * ease;
+            const tr = rot * ease;
+            const ts = 1 + (scale - 1) * ease;
+
+            card.style.transition = 'none';
+            card.style.transform =
+                `translate(-50%, -50%) translateX(${tx}px) translateY(${ty}px) rotate(${tr}deg) scale(${ts})`;
+            // Dynamic z-index: cards in front of the figure-8 get higher z
+            card.style.zIndex = Math.round(50 + 30 * Math.sin(t * 0.8 + (i / total) * Math.PI * 2));
+        });
+
+        animFrame = requestAnimationFrame(animateFlow);
+    }
+
+    // ── Settle animation: ease cards back from wherever they are to home ──
+    function animateSettle(timestamp) {
+        if (!settleStart) settleStart = timestamp;
+        const elapsed = timestamp - settleStart;
+        const p = Math.min(elapsed / SETTLE_DURATION, 1);
+        // Smooth ease-in-out
+        const ease = p < 0.5
+            ? 4 * p * p * p
+            : 1 - Math.pow(-2 * p + 2, 3) / 2;
+
+        cardHomes.forEach(({ el, home, zIndex }) => {
+            // Parse the home transform's translateX value for blending
+            // But it's simpler to just crossfade via opacity of the flow transform
+            // Actually, let's just interpolate back:
+            // At ease=0 keep current; at ease=1 restore home
+            if (ease >= 1) {
+                el.style.transition = '';
+                el.style.transform = home;
+                el.style.zIndex = zIndex;
+            } else {
+                // Get current computed position to interpolate from
+                el.style.transition = 'none';
+                // Use a simple approach: set CSS transition and let browser interpolate
+            }
+        });
+
+        if (p < 1) {
+            animFrame = requestAnimationFrame(animateSettle);
+        } else {
+            animFrame = null;
+            onboardingState = 'ready';
+        }
+    }
+
+    function startFlowingShuffle() {
+        const cards = getCards();
+        if (cards.length === 0) return;
+
+        // Capture current positions to return to later
+        captureHomes(cards);
+
+        // Pick an evenly-spaced subset for the visual flow
+        // On mobile, dummy cards are already ~26, so use all of them
+        if (isMobileView() || cards.length <= VISUAL_CARD_COUNT) {
+            flowCards = cards;
+            hiddenCards = [];
+        } else {
+            // Evenly sample from the full deck for visual spread
+            const step = cards.length / VISUAL_CARD_COUNT;
+            flowCards = [];
+            hiddenCards = [];
+            const pickedIndices = new Set();
+            for (let j = 0; j < VISUAL_CARD_COUNT; j++) {
+                pickedIndices.add(Math.round(j * step));
+            }
+            cards.forEach((c, idx) => {
+                if (pickedIndices.has(idx)) {
+                    flowCards.push(c);
+                } else {
+                    hiddenCards.push(c);
+                }
+            });
+        }
+
+        // Hide non-flowing cards, disable hover transitions on flowing ones
+        hiddenCards.forEach(c => { c.style.opacity = '0'; c.style.pointerEvents = 'none'; });
+        flowCards.forEach(c => c.classList.add('shuffling'));
+
+        // Shuffle the actual data each time
+        deck = shuffleArray(deck);
+
+        animStart = 0;
+        animFrame = requestAnimationFrame(animateFlow);
+    }
+
+    function stopFlowingShuffle() {
+        if (animFrame) {
+            cancelAnimationFrame(animFrame);
+            animFrame = null;
+        }
+
+        // Shuffle data once more for good measure
+        deck = shuffleArray(deck);
+
+        // Restore hidden cards before re-rendering
+        hiddenCards.forEach(c => { c.style.opacity = ''; c.style.pointerEvents = ''; });
+        hiddenCards = [];
+        flowCards = [];
+
+        // Smoothly return cards to deck with CSS transition
+        const cards = getCards();
+        cards.forEach((card, i) => {
+            card.classList.remove('shuffling');
+            card.classList.add('settling');
+        });
+
+        // Re-render the deck to get new positions, then animate into them
+        if (isMobileView()) {
+            renderMobileDummyDeckAnimated();
+        } else {
+            renderDeckAnimated();
+        }
+
+        // Cleanup settling class
+        setTimeout(() => {
+            deckContainer.querySelectorAll('.card').forEach(c => c.classList.remove('settling'));
+        }, 600);
+    }
+
+    const svgIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17h2.735a4 4 0 003.43-1.94l3.67-6.12A4 4 0 0116.265 7H21m0 0l-3-3m3 3l-3 3M3 7h2.735a4 4 0 013.43 1.94l.5.83m6.07 4.29l.5.83A4 4 0 0016.265 17H21m0 0l-3-3m3 3l-3 3" /></svg>`;
+
+    function updateOnboardingBtn(state) {
+        onboardingState = state;
+        if (state === 'shuffling') {
+            onboardingBtn.className = 'onboarding-shuffle-btn stop';
+            onboardingBtn.innerHTML = svgIcon + ' Stop Shuffling';
+            onboardingHint.classList.remove('visible');
+        } else if (state === 'ready') {
+            onboardingBtn.className = 'onboarding-shuffle-btn again';
+            onboardingBtn.innerHTML = svgIcon + ' Shuffle Again';
+            onboardingHint.classList.add('visible');
+        }
+    }
+
+    onboardingBtn.addEventListener('click', () => {
+        if (onboardingState === 'initial' || onboardingState === 'ready') {
+            updateOnboardingBtn('shuffling');
+            startFlowingShuffle();
+        } else if (onboardingState === 'shuffling') {
+            stopFlowingShuffle();
+            updateOnboardingBtn('ready');
+        }
+    });
+
+    // Hide onboarding when a card is placed
+    const observer = new MutationObserver(() => {
+        if (readingSurface.classList.contains('has-cards')) {
+            if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+            onboardingCta.classList.add('hidden');
+            onboardingState = 'dismissed';
+            observer.disconnect();
+        }
+    });
+    observer.observe(readingSurface, { attributes: true, attributeFilter: ['class'] });
+
+    // If cards are already placed on load, hide immediately
+    if (placedCards.length > 0) {
+        onboardingCta.classList.add('hidden');
+        onboardingState = 'dismissed';
+    }
+})();
 
 // Animated version for mobile dummy deck (cards return to fixed positions)
 function renderMobileDummyDeckAnimated() {
@@ -3725,7 +3975,7 @@ function placeCardAtPosition(card, percentX, percentY) {
     // Setup interactions
     addPlacedCardHandlers(placedCard, card);
     
-    // Hide "Drag cards here" text and dock the deck
+    // Hide "Place cards here" text and dock the deck
     readingSurface.classList.add('has-cards');
     document.querySelector('.deck-area').classList.add('docked');
     

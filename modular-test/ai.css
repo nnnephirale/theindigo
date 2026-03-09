@@ -197,12 +197,13 @@
             touch-action: manipulation;
         }
         .reading-surface-content::before {
-            content: 'Drag cards here'; position: absolute; top: 50%; left: 50%;
+            content: 'Place cards here'; position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%); font-size: 0.875rem;
             color: hsl(var(--muted-foreground) / 0.6); pointer-events: none;
             transition: opacity 0.3s;
         }
         .reading-surface.has-cards .reading-surface-content::before { opacity: 0; }
+        .reading-surface:has(.onboarding-cta:not(.hidden)) .reading-surface-content::before { opacity: 0; }
 .deck-controls {
     display: flex;
     justify-content: center;
@@ -1315,6 +1316,99 @@
             .spread-reference {
                 z-index: 150; /* Above dock on mobile */
             }
+        }
+
+        /* ============================================
+           ONBOARDING CTA
+           ============================================ */
+        .onboarding-cta {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        .onboarding-cta.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .onboarding-shuffle-btn {
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            font-family: inherit;
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .onboarding-shuffle-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.03);
+        }
+        .onboarding-shuffle-btn:active {
+            transform: scale(0.97);
+        }
+        .onboarding-shuffle-btn .icon {
+            width: 1.125rem;
+            height: 1.125rem;
+        }
+        .onboarding-shuffle-btn.stop {
+            background: transparent;
+            border: 1px solid hsl(var(--border));
+            color: hsl(var(--foreground));
+        }
+        .onboarding-shuffle-btn.again {
+            background: transparent;
+            border: 1px solid hsl(var(--border));
+            color: hsl(var(--muted-foreground));
+            font-size: 0.8125rem;
+            padding: 0.5rem 1.25rem;
+        }
+        .onboarding-shuffle-btn.again:hover {
+            color: hsl(var(--foreground));
+            border-color: hsl(var(--foreground));
+        }
+        /* Hint: "Choose a card" + arrow */
+        .onboarding-hint {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 1rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        .onboarding-hint.visible {
+            opacity: 1;
+        }
+        .onboarding-hint-text {
+            font-size: 0.8125rem;
+            color: hsl(var(--muted-foreground));
+            font-weight: 500;
+        }
+        .onboarding-arrow {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: hsl(var(--muted-foreground));
+            animation: onboardingBounce 1.5s ease-in-out infinite;
+        }
+        @keyframes onboardingBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
         }
 
         /* ============================================

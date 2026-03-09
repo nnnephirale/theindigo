@@ -6,6 +6,75 @@
     <title>Tarot Reader (Dev)</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="modular-test/ai.css">
+    <style>
+        /* Onboarding CTA: in-flow, NEVER moves — only deck translates */
+        #onboardingCta {
+            position: relative;
+            top: auto; left: auto;
+            transform: none !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.75rem 0 4.5rem;
+            max-height: 12rem;
+            overflow: hidden;
+            transition: opacity 0.3s ease, max-height 0.35s ease, padding 0.35s ease;
+        }
+        #onboardingCta.hidden {
+            opacity: 0;
+            pointer-events: none;
+            max-height: 0;
+            padding: 0;
+        }
+        /* Hide "Place cards here" placeholder until onboarding is done */
+        main:not(.onboarding-complete) .reading-surface-content::before { opacity: 0; }
+        /* Hide shuffle + reset during onboarding only — one-way, never re-hides */
+        main:not(.onboarding-complete) #shuffleBtn,
+        main:not(.onboarding-complete) #resetBtn { display: none; }
+        /* Fade them in once the first card is ever placed */
+        main.onboarding-complete #shuffleBtn,
+        main.onboarding-complete #resetBtn { animation: deckBtnFadeIn 0.4s ease forwards; }
+        @keyframes deckBtnFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Disable card hover while figure-8 is running */
+        .card.shuffling { pointer-events: none !important; }
+        /* Match font size to other buttons */
+        .onboarding-shuffle-btn {
+            font-size: 0.8125rem !important;
+        }
+        /* Stop Shuffling: no icon, fades in with slight delay after shuffle starts */
+        .onboarding-shuffle-btn.stop .icon {
+            display: none;
+        }
+        .onboarding-shuffle-btn.stop {
+            animation: deckBtnFadeIn 0.4s ease 0.5s both;
+        }
+        /* Hide Shuffle Again during settle, then fade in with slight delay */
+        #onboardingCta.shuffle-settling #onboardingShuffleBtn {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        #onboardingCta:not(.shuffle-settling) .onboarding-shuffle-btn.again {
+            animation: deckBtnFadeIn 0.4s ease 0.25s both;
+        }
+        /* Greyed-out Shuffle Again */
+        .onboarding-shuffle-btn.again {
+            opacity: 0.5;
+            border-color: hsl(var(--border) / 0.5);
+        }
+        .onboarding-shuffle-btn.again:hover {
+            opacity: 1;
+            border-color: hsl(var(--foreground));
+        }
+        /* "Choose a card" hint — body-level, truly fixed in viewport center */
+        #onboardingHint {
+            position: fixed;
+            top: 42%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 0 !important;
+            z-index: 50;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -112,6 +181,15 @@
                 </div>
                 <div class="reading-surface-content" id="readingSurfaceContent"></div>
             </div>
+            <!-- Onboarding CTA: sits just above the deck cards -->
+            <div class="onboarding-cta" id="onboardingCta">
+                <button class="onboarding-shuffle-btn" id="onboardingShuffleBtn">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 17h2.735a4 4 0 003.43-1.94l3.67-6.12A4 4 0 0116.265 7H21m0 0l-3-3m3 3l-3 3M3 7h2.735a4 4 0 013.43 1.94l.5.83m6.07 4.29l.5.83A4 4 0 0016.265 17H21m0 0l-3-3m3 3l-3 3" />
+                    </svg>
+                    Shuffle
+                </button>
+                </div>
             <div class="deck-area">
                 <div class="deck-container" id="deckContainer"></div>
             </div>
@@ -143,7 +221,7 @@
                     <span>Pick a Spread</span>
                 </button>
             </div>
-            <p class="instructions">Drag cards to the reading surface · Click to reveal</p>
+            <p class="instructions">Place cards on the reading surface · Click to reveal</p>
         </main>
     </div>
     <div class="card-modal" id="cardModal">
@@ -261,6 +339,13 @@
         </div>
     </div>
     <div class="spread-overlay" id="spreadOverlay"></div>
+    <!-- Hint lives at body level so position:fixed is relative to viewport, not a transform ancestor -->
+    <div class="onboarding-hint" id="onboardingHint">
+        <span class="onboarding-hint-text">Choose a card</span>
+        <svg class="onboarding-arrow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-5-5m5 5l5-5" />
+        </svg>
+    </div>
 
     <!-- AI Chat Sidebar -->
     <div class="ai-chat-sidebar" id="aiChatSidebar">
@@ -330,6 +415,40 @@
         </div>
     </div>
 
-</body>
+<script>window.PILL_VISUAL_CARD_COUNT = 48;</script>
 <script src="modular-test/ai.js"></script>
+<script>
+// Mark onboarding as permanently complete when the first card is ever placed.
+(function() {
+    const main = document.querySelector('main');
+    const surface = document.getElementById('readingSurface');
+    if (!main || !surface) return;
+    const obs = new MutationObserver(() => {
+        if (surface.classList.contains('has-cards')) {
+            main.classList.add('onboarding-complete');
+            obs.disconnect();
+        }
+    });
+    obs.observe(surface, { attributes: true, attributeFilter: ['class'] });
+})();
+
+// Watch for shuffle end to fade in Shuffle Again with a short delay.
+(function() {
+    const cta = document.getElementById('onboardingCta');
+    const container = document.getElementById('deckContainer');
+    if (!cta || !container) return;
+    let shuffling = false;
+    const obs = new MutationObserver(() => {
+        const isShuffling = !!container.querySelector('.card.shuffling');
+        if (isShuffling && !shuffling) {
+            shuffling = true;
+        } else if (!isShuffling && shuffling) {
+            shuffling = false;
+            cta.classList.add('shuffle-settling');
+            setTimeout(() => cta.classList.remove('shuffle-settling'), 900);
+        }
+    });
+    obs.observe(container, { subtree: true, attributes: true, attributeFilter: ['class'] });
+})();
+</script>
 </body></html>
