@@ -579,6 +579,8 @@ function loadPreferences() {
             if (prefs.reversalsEnabled) {
                 reversalsEnabled = true;
                 reversalsToggle.classList.add('active');
+                const label = reversalsToggle.querySelector('.btn-label');
+                if (label) label.textContent = 'Reversals: On';
             }
             // Dev mode
             if (prefs.devMode) {
@@ -2216,60 +2218,60 @@ document.getElementById('meaningsToggle').addEventListener('click', () => {
 modalClose.addEventListener('click', () => cardModal.classList.remove('active'));
 cardModal.addEventListener('click', e => { if (e.target === cardModal) cardModal.classList.remove('active'); });
 
-// Shuffle with swirl
-shuffleBtn.addEventListener('click', () => {
-    const cards = deckContainer.querySelectorAll('.card');
-    if (cards.length === 0) return;
-    shuffleBtn.disabled = true;
-    
-    const isMobile = isMobileView();
+// Shuffle with swirl (shuffleBtn removed from DOM — kept as no-op guard)
+if (shuffleBtn) {
+    shuffleBtn.addEventListener('click', () => {
+        const cards = deckContainer.querySelectorAll('.card');
+        if (cards.length === 0) return;
+        shuffleBtn.disabled = true;
 
-    // Phase 1: Scatter
-    cards.forEach(card => {
-        card.classList.add('shuffling');
-        const rx = (Math.random() - 0.5) * 320;
-        const ry = (Math.random() - 0.5) * 50;
-        const rr = (Math.random() - 0.5) * 400;
-        card.style.transform = `translate(-50%, -50%) translateX(${rx}px) translateY(${ry}px) rotate(${rr}deg)`;
-        card.style.zIndex = Math.floor(Math.random() * 100);
-    });
+        const isMobile = isMobileView();
 
-    // Phase 2: More chaos
-    setTimeout(() => {
+        // Phase 1: Scatter
         cards.forEach(card => {
-            const rx = (Math.random() - 0.5) * 280;
-            const ry = (Math.random() - 0.5) * 40;
-            const rr = (Math.random() - 0.5) * 300;
+            card.classList.add('shuffling');
+            const rx = (Math.random() - 0.5) * 320;
+            const ry = (Math.random() - 0.5) * 50;
+            const rr = (Math.random() - 0.5) * 400;
             card.style.transform = `translate(-50%, -50%) translateX(${rx}px) translateY(${ry}px) rotate(${rr}deg)`;
+            card.style.zIndex = Math.floor(Math.random() * 100);
         });
-    }, 300);
 
-    // Phase 3: Shuffle data (always shuffle the real deck)
-    setTimeout(() => { deck = shuffleArray(deck); }, 600);
+        // Phase 2: More chaos
+        setTimeout(() => {
+            cards.forEach(card => {
+                const rx = (Math.random() - 0.5) * 280;
+                const ry = (Math.random() - 0.5) * 40;
+                const rr = (Math.random() - 0.5) * 300;
+                card.style.transform = `translate(-50%, -50%) translateX(${rx}px) translateY(${ry}px) rotate(${rr}deg)`;
+            });
+        }, 300);
 
-    // Phase 4: Settle
-    setTimeout(() => {
-        cards.forEach(card => {
-            card.classList.remove('shuffling');
-            card.classList.add('settling');
-        });
-        
-        if (isMobile) {
-            // Mobile: Animate dummy cards back to their fixed positions
-            renderMobileDummyDeckAnimated();
-        } else {
-            // Desktop: Animate real cards to new positions
-            renderDeckAnimated();
-        }
-        updateDevPanel();
-    }, 800);
+        // Phase 3: Shuffle data (always shuffle the real deck)
+        setTimeout(() => { deck = shuffleArray(deck); }, 600);
 
-    // Cleanup
-    setTimeout(() => {
-        deckContainer.querySelectorAll('.card').forEach(c => c.classList.remove('settling'));
-        shuffleBtn.disabled = false;
-    }, 1500);
-});
+        // Phase 4: Settle
+        setTimeout(() => {
+            cards.forEach(card => {
+                card.classList.remove('shuffling');
+                card.classList.add('settling');
+            });
+
+            if (isMobile) {
+                renderMobileDummyDeckAnimated();
+            } else {
+                renderDeckAnimated();
+            }
+            updateDevPanel();
+        }, 800);
+
+        // Cleanup
+        setTimeout(() => {
+            deckContainer.querySelectorAll('.card').forEach(c => c.classList.remove('settling'));
+            shuffleBtn.disabled = false;
+        }, 1500);
+    });
+}
 
 // ============================================
 // ONBOARDING CTA — Flowing Shuffle Animation
@@ -2283,8 +2285,6 @@ shuffleBtn.addEventListener('click', () => {
     let onboardingState = 'initial'; // 'initial' | 'shuffling' | 'settling' | 'ready' | 'dismissed'
     let animFrame = null;
     let animStart = 0;
-    let settleStart = 0;
-    const SETTLE_DURATION = 900; // ms to ease cards back to deck
 
     // Store each card's "home" transform so we can return to it
     let cardHomes = [];
@@ -2369,40 +2369,6 @@ shuffleBtn.addEventListener('click', () => {
         animFrame = requestAnimationFrame(animateFlow);
     }
 
-    // ── Settle animation: ease cards back from wherever they are to home ──
-    function animateSettle(timestamp) {
-        if (!settleStart) settleStart = timestamp;
-        const elapsed = timestamp - settleStart;
-        const p = Math.min(elapsed / SETTLE_DURATION, 1);
-        // Smooth ease-in-out
-        const ease = p < 0.5
-            ? 4 * p * p * p
-            : 1 - Math.pow(-2 * p + 2, 3) / 2;
-
-        cardHomes.forEach(({ el, home, zIndex }) => {
-            // Parse the home transform's translateX value for blending
-            // But it's simpler to just crossfade via opacity of the flow transform
-            // Actually, let's just interpolate back:
-            // At ease=0 keep current; at ease=1 restore home
-            if (ease >= 1) {
-                el.style.transition = '';
-                el.style.transform = home;
-                el.style.zIndex = zIndex;
-            } else {
-                // Get current computed position to interpolate from
-                el.style.transition = 'none';
-                // Use a simple approach: set CSS transition and let browser interpolate
-            }
-        });
-
-        if (p < 1) {
-            animFrame = requestAnimationFrame(animateSettle);
-        } else {
-            animFrame = null;
-            onboardingState = 'ready';
-        }
-    }
-
     function startFlowingShuffle() {
         const cards = getCards();
         if (cards.length === 0) return;
@@ -2480,21 +2446,72 @@ shuffleBtn.addEventListener('click', () => {
 
     const svgIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17h2.735a4 4 0 003.43-1.94l3.67-6.12A4 4 0 0116.265 7H21m0 0l-3-3m3 3l-3 3M3 7h2.735a4 4 0 013.43 1.94l.5.83m6.07 4.29l.5.83A4 4 0 0016.265 17H21m0 0l-3-3m3 3l-3 3" /></svg>`;
 
-    function updateOnboardingBtn(state) {
-        onboardingState = state;
-        if (state === 'shuffling') {
-            onboardingBtn.className = 'onboarding-shuffle-btn stop';
-            onboardingBtn.innerHTML = svgIcon + ' Stop Shuffling';
-            onboardingHint.classList.remove('visible');
-        } else if (state === 'ready') {
-            onboardingBtn.className = 'onboarding-shuffle-btn again';
-            onboardingBtn.innerHTML = svgIcon + ' Shuffle Again';
-            onboardingHint.classList.add('visible');
+    const onboardingReversalsPill = document.getElementById('onboardingReversalsPill');
+
+    function syncReversalsPill() {
+        if (onboardingReversalsPill) {
+            onboardingReversalsPill.classList.toggle('active', reversalsEnabled);
+            const span = onboardingReversalsPill.querySelector('span');
+            if (span) span.textContent = reversalsEnabled ? 'Reversals: On' : 'Reversals: Off';
         }
     }
 
+    if (onboardingReversalsPill) {
+        onboardingReversalsPill.addEventListener('click', () => {
+            reversalsToggle.click();
+            syncReversalsPill();
+        });
+        // Sync initial state
+        syncReversalsPill();
+    }
+
+    function updateOnboardingBtn(state) {
+        onboardingState = state;
+        const ctaEl = document.getElementById('onboardingCta');
+        if (state === 'shuffling') {
+            onboardingBtn.className = 'onboarding-shuffle-btn stop';
+            onboardingBtn.innerHTML = svgIcon + ' Stop Shuffling';
+            if (onboardingHint) onboardingHint.classList.remove('visible');
+            // Hide session toolbar during shuffle
+            const deckControls = document.querySelector('.deck-controls');
+            if (deckControls) deckControls.classList.remove('toolbar-visible');
+            // Show reversals pill
+            if (ctaEl) ctaEl.classList.add('shuffling');
+            syncReversalsPill();
+        } else if (state === 'ready') {
+            // Hide reversals pill when shuffle stops
+            if (ctaEl) ctaEl.classList.remove('shuffling');
+            // No button in "ready" state — hide the onboarding CTA button
+            onboardingBtn.style.display = 'none';
+            // Show mystical "Pick a card" hint after settle delay
+            setTimeout(() => {
+                if (onboardingHint) {
+                    animateMysticalText(onboardingHint);
+                    onboardingHint.classList.add('visible');
+                }
+                // Fade in the session toolbar
+                const deckControls = document.querySelector('.deck-controls');
+                if (deckControls) deckControls.classList.add('toolbar-visible');
+            }, 900); // Wait for cards to settle
+        }
+    }
+
+    // Animate text as staggered letter-by-letter fade
+    function animateMysticalText(hintEl) {
+        const text = hintEl.dataset.text || hintEl.textContent.trim();
+        hintEl.dataset.text = text; // preserve original for re-animation
+        hintEl.innerHTML = '';
+        text.split('').forEach((char, i) => {
+            const span = document.createElement('span');
+            span.textContent = char === ' ' ? '\u00A0' : char;
+            span.className = 'mystical-letter';
+            span.style.animationDelay = `${i * 60}ms`;
+            hintEl.appendChild(span);
+        });
+    }
+
     onboardingBtn.addEventListener('click', () => {
-        if (onboardingState === 'initial' || onboardingState === 'ready') {
+        if (onboardingState === 'initial') {
             updateOnboardingBtn('shuffling');
             startFlowingShuffle();
         } else if (onboardingState === 'shuffling') {
@@ -2508,7 +2525,11 @@ shuffleBtn.addEventListener('click', () => {
         if (readingSurface.classList.contains('has-cards')) {
             if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
             onboardingCta.classList.add('hidden');
+            if (onboardingHint) onboardingHint.classList.remove('visible');
             onboardingState = 'dismissed';
+            // Swap "Restart Session" → "New Session"
+            const resetLabel = document.querySelector('#resetBtn .btn-label');
+            if (resetLabel) resetLabel.textContent = 'New Session';
             observer.disconnect();
         }
     });
@@ -2518,7 +2539,36 @@ shuffleBtn.addEventListener('click', () => {
     if (placedCards.length > 0) {
         onboardingCta.classList.add('hidden');
         onboardingState = 'dismissed';
+        // Also set "New Session" label for restored sessions
+        const resetLabel = document.querySelector('#resetBtn .btn-label');
+        if (resetLabel) resetLabel.textContent = 'New Session';
     }
+
+    function attachOnboardingObserver() {
+        const obs = new MutationObserver(() => {
+            if (readingSurface.classList.contains('has-cards')) {
+                if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+                onboardingCta.classList.add('hidden');
+                if (onboardingHint) onboardingHint.classList.remove('visible');
+                onboardingState = 'dismissed';
+                const rl = document.querySelector('#resetBtn .btn-label');
+                if (rl) rl.textContent = 'New Session';
+                obs.disconnect();
+            }
+        });
+        obs.observe(readingSurface, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Listen for reinit from "New Session" / "Restart Session" button
+    window.addEventListener('reinitOnboarding', () => {
+        onboardingState = 'initial';
+        animFrame = null;
+        animStart = 0;
+        cardHomes = [];
+        flowCards = [];
+        hiddenCards = [];
+        attachOnboardingObserver();
+    });
 })();
 
 // Animated version for mobile dummy deck (cards return to fixed positions)
@@ -2578,17 +2628,51 @@ resetBtn.addEventListener('click', () => {
     readingSurface.classList.remove('has-cards');
     document.querySelector('.deck-area').classList.remove('docked');
     currentReadingId = null;
-    
+
     // Clear spread
     currentSpread = null;
     clearSpreadSlots();
     hideSpreadReference();
-    
+
     // Reset zoom/pan
     resetZoom();
-    
+
     localStorage.removeItem(STORAGE_KEYS.CURRENT_READING);
     initializeDeck();
+
+    // Full restart: go back to Phase 1 (Shuffle onboarding)
+    const main = document.querySelector('main');
+    if (main) main.classList.remove('onboarding-complete');
+
+    const onboardingCta = document.getElementById('onboardingCta');
+    const onboardingBtn = document.getElementById('onboardingShuffleBtn');
+    const onboardingHint = document.getElementById('onboardingHint');
+
+    // Re-show onboarding CTA with fresh Shuffle button (reset reversals pill visibility)
+    if (onboardingCta) { onboardingCta.classList.remove('hidden'); onboardingCta.classList.remove('shuffling'); }
+    if (onboardingBtn) {
+        onboardingBtn.style.display = '';
+        onboardingBtn.className = 'onboarding-shuffle-btn';
+        const svgIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17h2.735a4 4 0 003.43-1.94l3.67-6.12A4 4 0 0116.265 7H21m0 0l-3-3m3 3l-3 3M3 7h2.735a4 4 0 013.43 1.94l.5.83m6.07 4.29l.5.83A4 4 0 0016.265 17H21m0 0l-3-3m3 3l-3 3" /></svg>`;
+        onboardingBtn.innerHTML = svgIcon + ' Shuffle';
+    }
+
+    // Hide mystical hint
+    if (onboardingHint) {
+        onboardingHint.classList.remove('visible');
+        onboardingHint.innerHTML = onboardingHint.dataset.text || 'Pick a card';
+    }
+
+    // Hide session toolbar
+    const deckControls = document.querySelector('.deck-controls');
+    if (deckControls) deckControls.classList.remove('toolbar-visible');
+
+    // Reset button label back to "Restart Session"
+    const resetLabel = document.querySelector('#resetBtn .btn-label');
+    if (resetLabel) resetLabel.textContent = 'Restart Session';
+
+    // Re-attach onboarding observer for the new session
+    window.dispatchEvent(new CustomEvent('reinitOnboarding'));
 });
 
 // Mobile Menu
@@ -2612,7 +2696,9 @@ document.addEventListener('click', (e) => {
 
 // Mobile menu actions - trigger the same handlers as desktop buttons
 mobileShuffleBtn.addEventListener('click', () => {
-    shuffleBtn.click();
+    // Shuffle button removed from deck-controls; trigger New Session instead
+    if (shuffleBtn) shuffleBtn.click();
+    else resetBtn.click();
     mobileMenu.classList.remove('open');
 });
 
@@ -2643,6 +2729,16 @@ reversalsToggle.addEventListener('click', () => {
     reversalsToggle.classList.toggle('active');
     reversalsEnabled = reversalsToggle.classList.contains('active');
     savePreferences();
+    // Update toolbar label
+    const label = reversalsToggle.querySelector('.btn-label');
+    if (label) label.textContent = reversalsEnabled ? 'Reversals: On' : 'Reversals: Off';
+    // Sync onboarding pill
+    const pill = document.getElementById('onboardingReversalsPill');
+    if (pill) {
+        pill.classList.toggle('active', reversalsEnabled);
+        const span = pill.querySelector('span');
+        if (span) span.textContent = reversalsEnabled ? 'Reversals: On' : 'Reversals: Off';
+    }
 });
 
 // Dev toggle

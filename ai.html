@@ -28,12 +28,6 @@
         }
         /* Hide "Place cards here" placeholder until onboarding is done */
         main:not(.onboarding-complete) .reading-surface-content::before { opacity: 0; }
-        /* Hide shuffle + reset during onboarding only — one-way, never re-hides */
-        main:not(.onboarding-complete) #shuffleBtn,
-        main:not(.onboarding-complete) #resetBtn { display: none; }
-        /* Fade them in once the first card is ever placed */
-        main.onboarding-complete #shuffleBtn,
-        main.onboarding-complete #resetBtn { animation: deckBtnFadeIn 0.4s ease forwards; }
         @keyframes deckBtnFadeIn { from { opacity: 0; } to { opacity: 1; } }
         /* Disable card hover while figure-8 is running */
         .card.shuffling { pointer-events: none !important; }
@@ -48,31 +42,112 @@
         .onboarding-shuffle-btn.stop {
             animation: deckBtnFadeIn 0.4s ease 0.5s both;
         }
-        /* Hide Shuffle Again during settle, then fade in with slight delay */
-        #onboardingCta.shuffle-settling #onboardingShuffleBtn {
-            opacity: 0 !important;
-            pointer-events: none !important;
+
+        /* ── Session Toolbar: hidden by default, fades in via .toolbar-visible ── */
+        .deck-controls {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
         }
-        #onboardingCta:not(.shuffle-settling) .onboarding-shuffle-btn.again {
-            animation: deckBtnFadeIn 0.4s ease 0.25s both;
-        }
-        /* Greyed-out Shuffle Again */
-        .onboarding-shuffle-btn.again {
-            opacity: 0.5;
-            border-color: hsl(var(--border) / 0.5);
-        }
-        .onboarding-shuffle-btn.again:hover {
+        .deck-controls.toolbar-visible {
             opacity: 1;
-            border-color: hsl(var(--foreground));
+            pointer-events: auto;
         }
-        /* "Choose a card" hint — body-level, truly fixed in viewport center */
+
+        /* ── Mystical "Pick a card" hint ── */
         #onboardingHint {
-            position: fixed;
-            top: 42%;
+            position: absolute;
+            top: 40%;
             left: 50%;
-            transform: translateX(-50%);
-            margin-top: 0 !important;
+            transform: translate(-50%, -50%);
             z-index: 50;
+            pointer-events: none;
+            font-size: 1.125rem;
+            font-weight: 400;
+            letter-spacing: 0.2em;
+            color: hsl(var(--foreground));
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        #onboardingHint.visible {
+            opacity: 1;
+        }
+        .mystical-letter {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(4px);
+            animation: letterFadeIn 0.6s ease forwards;
+        }
+        @keyframes letterFadeIn {
+            0% { opacity: 0; transform: translateY(4px); }
+            100% { opacity: 0.35; transform: translateY(0); }
+        }
+
+        /* ── Onboarding CTA row: 3-col grid keeps shuffle btn perfectly centered ── */
+        .onboarding-cta-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            width: 100%;
+        }
+        .onboarding-cta-pill-slot {
+            display: flex;
+            align-items: center;
+            padding-left: 0.75rem;
+        }
+        .onboarding-reversals-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            border: 1px solid hsl(var(--border));
+            background: transparent;
+            color: hsl(var(--muted-foreground));
+            font-size: 0.8125rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease 0.5s, color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+            white-space: nowrap;
+        }
+        .onboarding-reversals-pill .icon {
+            width: 1rem;
+            height: 1rem;
+            flex-shrink: 0;
+        }
+        /* When shuffling: center the PAIR [Stop Shuffling + Reversals] together */
+        #onboardingCta.shuffling .onboarding-cta-row {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+        #onboardingCta.shuffling .onboarding-cta-row > div:first-child {
+            display: none;
+        }
+        #onboardingCta.shuffling .onboarding-cta-pill-slot {
+            padding-left: 0;
+        }
+        #onboardingCta.shuffling .onboarding-reversals-pill {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .onboarding-reversals-pill.active {
+            color: hsl(var(--primary-foreground));
+            border-color: hsl(var(--primary));
+            background: hsl(var(--primary));
+        }
+        /* Crescent card icon: flips upside-down when reversals are on */
+        .reversals-card-icon {
+            transition: transform 0.4s ease;
+        }
+        .onboarding-reversals-pill.active .reversals-card-icon,
+        #reversalsToggle.active .reversals-card-icon,
+        #mobileReversalsBtn.active .reversals-card-icon {
+            transform: rotate(180deg);
         }
     </style>
 </head>
@@ -119,7 +194,7 @@
             
             <!-- Mobile Menu Dropdown -->
             <div class="mobile-menu" id="mobileMenu">
-                <button class="mobile-menu-item" id="mobileShuffleBtn">
+                <button class="mobile-menu-item" id="mobileShuffleBtn" style="display:none;">
                     <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 17h2.735a4 4 0 003.43-1.94l3.67-6.12A4 4 0 0116.265 7H21m0 0l-3-3m3 3l-3 3M3 7h2.735a4 4 0 013.43 1.94l.5.83m6.07 4.29l.5.83A4 4 0 0016.265 17H21m0 0l-3-3m3 3l-3 3" />
                     </svg>
@@ -127,13 +202,16 @@
                 </button>
                 <button class="mobile-menu-item" id="mobileResetBtn">
                     <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    <span>Reset</span>
+                    <span>New Session</span>
                 </button>
                 <button class="mobile-menu-item" id="mobileReversalsBtn">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    <svg class="icon reversals-card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="1" width="18" height="22" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M16.1 8.33A5.5 5.5 0 1 0 16.1 15.67A4 4 0 1 1 16.1 8.33Z" stroke="currentColor" stroke-width="1.2" fill="none"/>
+                        <circle cx="10" cy="10" r="1.1" fill="currentColor"/>
+                        <path d="M8.5 13.5Q9.5 15 10.5 13.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/>
                     </svg>
                     <span>Reversals</span>
                 </button>
@@ -180,35 +258,50 @@
                     </div>
                 </div>
                 <div class="reading-surface-content" id="readingSurfaceContent"></div>
+                <!-- Mystical floating hint — inside reading surface for proper positioning -->
+                <div id="onboardingHint" data-text="Pick a card">Pick a card</div>
             </div>
             <!-- Onboarding CTA: sits just above the deck cards -->
             <div class="onboarding-cta" id="onboardingCta">
-                <button class="onboarding-shuffle-btn" id="onboardingShuffleBtn">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 17h2.735a4 4 0 003.43-1.94l3.67-6.12A4 4 0 0116.265 7H21m0 0l-3-3m3 3l-3 3M3 7h2.735a4 4 0 013.43 1.94l.5.83m6.07 4.29l.5.83A4 4 0 0016.265 17H21m0 0l-3-3m3 3l-3 3" />
-                    </svg>
-                    Shuffle
-                </button>
+                <div class="onboarding-cta-row">
+                    <div></div>
+                    <button class="onboarding-shuffle-btn" id="onboardingShuffleBtn">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 17h2.735a4 4 0 003.43-1.94l3.67-6.12A4 4 0 0116.265 7H21m0 0l-3-3m3 3l-3 3M3 7h2.735a4 4 0 013.43 1.94l.5.83m6.07 4.29l.5.83A4 4 0 0016.265 17H21m0 0l-3-3m3 3l-3 3" />
+                        </svg>
+                        Shuffle
+                    </button>
+                    <div class="onboarding-cta-pill-slot">
+                        <button class="onboarding-reversals-pill" id="onboardingReversalsPill" title="Toggle Reversals">
+                            <svg class="icon reversals-card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                                <rect x="3" y="1" width="18" height="22" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M16.1 8.33A5.5 5.5 0 1 0 16.1 15.67A4 4 0 1 1 16.1 8.33Z" stroke="currentColor" stroke-width="1.2" fill="none"/>
+                                <circle cx="10" cy="10" r="1.1" fill="currentColor"/>
+                                <path d="M8.5 13.5Q9.5 15 10.5 13.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+                            </svg>
+                            <span>Reversals: Off</span>
+                        </button>
+                    </div>
                 </div>
+            </div>
             <div class="deck-area">
                 <div class="deck-container" id="deckContainer"></div>
             </div>
             <div class="deck-controls">
-                <button class="btn btn-outline" id="shuffleBtn" title="Shuffle">
+                <button class="btn btn-outline" id="resetBtn" title="Restart Session">
                     <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 17h2.735a4 4 0 003.43-1.94l3.67-6.12A4 4 0 0116.265 7H21m0 0l-3-3m3 3l-3 3M3 7h2.735a4 4 0 013.43 1.94l.5.83m6.07 4.29l.5.83A4 4 0 0016.265 17H21m0 0l-3-3m3 3l-3 3" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                </button>
-                <button class="btn btn-outline" id="resetBtn" title="Return Cards">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-                    </svg>
+                    <span class="btn-label">Restart Session</span>
                 </button>
                 <button class="btn btn-outline toggle-btn" id="reversalsToggle" title="Reversals">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    <svg class="icon reversals-card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="1" width="18" height="22" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M16.1 8.33A5.5 5.5 0 1 0 16.1 15.67A4 4 0 1 1 16.1 8.33Z" stroke="currentColor" stroke-width="1.2" fill="none"/>
+                        <circle cx="10" cy="10" r="1.1" fill="currentColor"/>
+                        <path d="M8.5 13.5Q9.5 15 10.5 13.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/>
                     </svg>
-                    <span>Reversals</span>
+                    <span class="btn-label">Reversals: Off</span>
                 </button>
                 <button class="btn btn-outline" id="spreadBtn" title="Pick a Spread">
                     <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -218,10 +311,9 @@
                         <rect x="5.75" y="13" width="5" height="8" rx="1" />
                         <rect x="13.25" y="13" width="5" height="8" rx="1" />
                     </svg>
-                    <span>Pick a Spread</span>
+                    <span class="btn-label">Pick a Spread</span>
                 </button>
             </div>
-            <p class="instructions">Place cards on the reading surface · Click to reveal</p>
         </main>
     </div>
     <div class="card-modal" id="cardModal">
@@ -339,13 +431,6 @@
         </div>
     </div>
     <div class="spread-overlay" id="spreadOverlay"></div>
-    <!-- Hint lives at body level so position:fixed is relative to viewport, not a transform ancestor -->
-    <div class="onboarding-hint" id="onboardingHint">
-        <span class="onboarding-hint-text">Choose a card</span>
-        <svg class="onboarding-arrow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-5-5m5 5l5-5" />
-        </svg>
-    </div>
 
     <!-- AI Chat Sidebar -->
     <div class="ai-chat-sidebar" id="aiChatSidebar">
@@ -418,37 +503,42 @@
 <script>window.PILL_VISUAL_CARD_COUNT = 48;</script>
 <script src="modular-test/ai.js"></script>
 <script>
-// Mark onboarding as permanently complete when the first card is ever placed.
+// Mark onboarding as complete when the first card is placed.
+// Also handles restored sessions where has-cards is already set.
 (function() {
     const main = document.querySelector('main');
     const surface = document.getElementById('readingSurface');
+    const hint = document.getElementById('onboardingHint');
     if (!main || !surface) return;
-    const obs = new MutationObserver(() => {
-        if (surface.classList.contains('has-cards')) {
-            main.classList.add('onboarding-complete');
-            obs.disconnect();
-        }
-    });
-    obs.observe(surface, { attributes: true, attributeFilter: ['class'] });
-})();
 
-// Watch for shuffle end to fade in Shuffle Again with a short delay.
-(function() {
-    const cta = document.getElementById('onboardingCta');
-    const container = document.getElementById('deckContainer');
-    if (!cta || !container) return;
-    let shuffling = false;
-    const obs = new MutationObserver(() => {
-        const isShuffling = !!container.querySelector('.card.shuffling');
-        if (isShuffling && !shuffling) {
-            shuffling = true;
-        } else if (!isShuffling && shuffling) {
-            shuffling = false;
-            cta.classList.add('shuffle-settling');
-            setTimeout(() => cta.classList.remove('shuffle-settling'), 900);
-        }
-    });
-    obs.observe(container, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    function markComplete() {
+        main.classList.add('onboarding-complete');
+        if (hint) hint.classList.remove('visible');
+        // Ensure toolbar stays visible in post-onboarding state
+        const deckControls = document.querySelector('.deck-controls');
+        if (deckControls) deckControls.classList.add('toolbar-visible');
+    }
+
+    // Restored session: has-cards already present when script runs
+    if (surface.classList.contains('has-cards')) {
+        markComplete();
+        return;
+    }
+
+    function attachObserver() {
+        const obs = new MutationObserver(() => {
+            if (surface.classList.contains('has-cards')) {
+                markComplete();
+                obs.disconnect();
+            }
+        });
+        obs.observe(surface, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    attachObserver();
+
+    // Re-attach observer after "New Session" / "Restart Session" resets the flow
+    window.addEventListener('reinitOnboarding', attachObserver);
 })();
 </script>
 </body></html>

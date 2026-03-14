@@ -456,11 +456,19 @@
                 display: none;
             }
             
-            /* Hide desktop deck controls on mobile */
-            .deck-controls { display: none; }
-            
-            /* Hide instructions on mobile */
-            .instructions { display: none; }
+            /* Mobile session toolbar: compact icon-only */
+            .deck-controls {
+                gap: 0.375rem;
+                padding-top: 6px;
+            }
+            .deck-controls .btn-label {
+                display: none;
+            }
+            .deck-controls .btn {
+                padding: 0.4rem 0.5rem;
+                min-width: 40px;
+                min-height: 40px;
+            }
             
             /* Mobile deck always in docked appearance */
             .deck-container { 
@@ -879,7 +887,7 @@
         .validation-status { margin-top: 0.5rem; padding: 0.375rem 0.625rem; border-radius: var(--radius); font-size: 0.6875rem; font-family: ui-monospace, monospace; }
         .validation-status.valid { background: hsl(142 76% 36% / 0.1); color: hsl(142 70% 35%); }
         .validation-status.invalid { background: hsl(0 84% 60% / 0.1); color: hsl(0 84% 50%); }
-        .instructions { text-align: center; font-size: 0.75rem; color: hsl(var(--muted-foreground) / 0.7); pointer-events: none; padding: 0.5rem 0; }
+        /* .instructions removed — replaced by mystical hint and session toolbar */
         .icon { width: 1rem; height: 1rem; }
         
         /* Save Modal */
